@@ -1,5 +1,5 @@
 // ─── API CONFIG ───
-const API_BASE = 'http://localhost:5000/api';
+const API_BASE = 'https://motofix-backend.onrender.com/api';
 
 // ── ดึง token จาก localStorage ──
 const getToken = () => localStorage.getItem('motofix_token');
