@@ -3,369 +3,173 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>เข้าสู่ระบบ — MotoFix Pro</title>
+<title>เข้าสู่ระบบ — Ao Nang Automotive</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Bebas+Neue&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-:root {
-  --bg-base:    #0d0d0f;
-  --bg-surface: #141416;
-  --bg-panel:   #1a1a1e;
-  --bg-input:   #1e1e23;
-  --border:     rgba(255,255,255,0.07);
-  --border-light: rgba(255,255,255,0.12);
-  --orange:     #F97316;
-  --orange-dim: rgba(249,115,22,0.12);
-  --red:        #EF4444;
-  --green:      #22C55E;
-  --text-primary:   #f0f0f2;
-  --text-secondary: #8a8a96;
-  --text-muted:     #52525e;
-  --font-display: 'Bebas Neue', sans-serif;
-  --font-body:    'Sarabun', sans-serif;
-  --font-mono:    'IBM Plex Mono', monospace;
-  --radius:    10px;
-  --radius-sm: 6px;
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --primary:#ea580c;
+  --primary-dim:#fff7ed;
+  --primary-border:#fed7aa;
+  --bg:#f3f4f6;
+  --white:#fff;
+  --border:#e5e7eb;
+  --text-900:#111827;
+  --text-700:#374151;
+  --text-500:#6b7280;
+  --text-400:#9ca3af;
+  --red:#dc2626;
+  --red-dim:#fef2f2;
+  --font:'Prompt',sans-serif;
 }
-body {
-  font-family: var(--font-body);
-  background: var(--bg-base);
-  color: var(--text-primary);
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-}
-
-/* ── Background grid ── */
-body::before {
-  content: '';
-  position: fixed; inset: 0;
-  background-image:
-    linear-gradient(rgba(249,115,22,0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(249,115,22,0.03) 1px, transparent 1px);
-  background-size: 40px 40px;
-  pointer-events: none;
-}
-
-.login-wrap {
-  width: 100%;
-  max-width: 420px;
-  position: relative;
-  z-index: 1;
-  animation: fadeUp 0.4s ease;
-}
-
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(16px); }
-  to   { opacity: 1; transform: none; }
-}
-
-/* ── Brand ── */
-.brand {
-  text-align: center;
-  margin-bottom: 32px;
-}
-.brand-logo {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 56px; height: 56px;
-  background: var(--orange-dim);
-  border: 1px solid rgba(249,115,22,0.25);
-  border-radius: 14px;
-  margin-bottom: 14px;
-}
-.brand-name {
-  font-family: var(--font-display);
-  font-size: 36px;
-  letter-spacing: 2px;
-  color: var(--text-primary);
-  line-height: 1;
-}
-.brand-name span { color: var(--orange); }
-.brand-sub {
-  font-size: 13px;
-  color: var(--text-muted);
-  margin-top: 6px;
-}
-
-/* ── Card ── */
-.login-card {
-  background: var(--bg-panel);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 28px;
-}
-.card-title {
-  font-family: var(--font-display);
-  font-size: 22px;
-  letter-spacing: 0.5px;
-  margin-bottom: 22px;
-  color: var(--text-primary);
-}
-
-/* ── Form ── */
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-bottom: 16px;
-}
-.form-group label {
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--text-secondary);
-}
-.input-wrap {
-  position: relative;
-}
-.input-wrap svg {
-  position: absolute;
-  left: 12px; top: 50%;
-  transform: translateY(-50%);
-  color: var(--text-muted);
-  pointer-events: none;
-}
-.input-wrap input {
-  width: 100%;
-  background: var(--bg-input);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 10px 12px 10px 38px;
-  font-family: var(--font-body);
-  font-size: 14px;
-  color: var(--text-primary);
-  outline: none;
-  transition: border 0.15s;
-}
-.input-wrap input:focus { border-color: var(--orange); }
-.input-wrap input::placeholder { color: var(--text-muted); }
-.input-wrap input.error { border-color: var(--red); }
-
-/* ── Toggle password ── */
-.toggle-pw {
-  position: absolute;
-  right: 12px; top: 50%;
-  transform: translateY(-50%);
-  background: none; border: none;
-  cursor: pointer;
-  color: var(--text-muted);
-  padding: 2px;
-  display: flex; align-items: center;
-}
-.toggle-pw:hover { color: var(--text-secondary); }
-
-/* ── Error msg ── */
-.error-msg {
-  display: none;
-  background: rgba(239,68,68,0.08);
-  border: 1px solid rgba(239,68,68,0.25);
-  border-radius: var(--radius-sm);
-  padding: 10px 14px;
-  font-size: 13px;
-  color: #fca5a5;
-  margin-bottom: 16px;
-  align-items: center;
-  gap: 8px;
-}
-.error-msg.show { display: flex; }
-
-/* ── Button ── */
-.btn-login {
-  width: 100%;
-  background: var(--orange);
-  color: #fff;
-  border: none;
-  border-radius: var(--radius-sm);
-  padding: 12px;
-  font-family: var(--font-body);
-  font-size: 15px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.15s;
-  display: flex; align-items: center; justify-content: center; gap: 8px;
-  margin-top: 4px;
-}
-.btn-login:hover:not(:disabled) { background: #ea6c0a; transform: translateY(-1px); }
-.btn-login:active { transform: none; }
-.btn-login:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
-
-/* ── Spinner ── */
-.spinner {
-  width: 16px; height: 16px;
-  border: 2px solid rgba(255,255,255,0.3);
-  border-top-color: #fff;
-  border-radius: 50%;
-  animation: spin 0.7s linear infinite;
-  display: none;
-}
-.btn-login.loading .spinner { display: block; }
-.btn-login.loading .btn-text { display: none; }
-@keyframes spin { to { transform: rotate(360deg); } }
-
-/* ── Footer ── */
-.login-footer {
-  text-align: center;
-  margin-top: 20px;
-  font-size: 12px;
-  color: var(--text-muted);
-}
-.login-footer span { font-family: var(--font-mono); color: var(--text-secondary); }
+body{font-family:var(--font);background:var(--bg);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);background-size:40px 40px;opacity:0.5;pointer-events:none;}
+.wrap{width:100%;max-width:420px;position:relative;z-index:1;animation:up 0.35s ease;}
+@keyframes up{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.brand{text-align:center;margin-bottom:28px;}
+.logo{width:56px;height:56px;background:var(--primary);border-radius:14px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:14px;}
+.brand-en{font-size:24px;font-weight:700;color:var(--text-900);line-height:1;}
+.brand-en span{color:var(--primary);}
+.brand-th{font-size:12px;color:var(--text-400);margin-top:4px;}
+.brand-addr{font-size:11px;color:var(--text-400);margin-top:4px;}
+.card{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:28px;}
+.card-title{font-size:18px;font-weight:700;color:var(--text-900);margin-bottom:20px;}
+.error-msg{display:none;background:var(--red-dim);border:1px solid #fecaca;border-radius:8px;padding:10px 14px;font-size:13px;font-weight:500;color:#991b1b;margin-bottom:16px;align-items:center;gap:8px;}
+.error-msg.show{display:flex;}
+.fg{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;}
+.fg label{font-size:12px;font-weight:600;color:var(--text-700);}
+.iw{position:relative;}
+.iw svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-400);pointer-events:none;}
+.iw input{width:100%;background:#f9fafb;border:1px solid var(--border);border-radius:8px;padding:10px 12px 10px 38px;font-family:var(--font);font-size:14px;font-weight:400;color:var(--text-900);outline:none;transition:border 0.15s;}
+.iw input:focus{border-color:var(--primary);}
+.iw input::placeholder{color:var(--text-400);}
+.iw input.err{border-color:var(--red);}
+.eye-btn{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-400);display:flex;align-items:center;}
+.eye-btn:hover{color:var(--text-700);}
+.btn-login{width:100%;background:var(--primary);color:#fff;border:none;border-radius:8px;padding:12px;font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;transition:all 0.15s;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:6px;}
+.btn-login:hover:not(:disabled){background:#c2410c;transform:translateY(-1px);}
+.btn-login:disabled{opacity:0.6;cursor:not-allowed;transform:none;}
+.spin{width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.7s linear infinite;display:none;}
+.btn-login.loading .spin{display:block;}
+.btn-login.loading .btn-text{display:none;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.footer{text-align:center;margin-top:18px;font-size:12px;color:var(--text-400);}
 </style>
 </head>
 <body>
-
-<div class="login-wrap">
+<div class="wrap">
   <div class="brand">
-    <div class="brand-logo">
-      <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-        <circle cx="14" cy="14" r="13" stroke="#F97316" stroke-width="1.5"/>
-        <circle cx="14" cy="14" r="4" fill="#F97316"/>
-        <line x1="14" y1="1" x2="14" y2="6" stroke="#F97316" stroke-width="1.5"/>
-        <line x1="14" y1="22" x2="14" y2="27" stroke="#F97316" stroke-width="1.5"/>
-        <line x1="1" y1="14" x2="6" y2="14" stroke="#F97316" stroke-width="1.5"/>
-        <line x1="22" y1="14" x2="27" y2="14" stroke="#F97316" stroke-width="1.5"/>
+    <div class="logo">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+        <path d="M12 2L4 8v13h5v-6h6v6h5V8L12 2z" fill="#fff"/>
+        <circle cx="12" cy="10.5" r="2.5" fill="#fed7aa"/>
       </svg>
     </div>
-    <div class="brand-name">MotoFix<span>Pro</span></div>
-    <div class="brand-sub">ระบบจัดการร้านซ่อมรถมอเตอร์ไซค์</div>
+    <div class="brand-en">Ao Nang <span>Automotive</span></div>
+    <div class="brand-th">อ่าวนางยานยนต์</div>
+    <div class="brand-addr">188 ม.2 ต.อ่าวนาง อ.เมือง จ.กระบี่ 81180</div>
   </div>
 
-  <div class="login-card">
+  <div class="card">
     <div class="card-title">เข้าสู่ระบบ</div>
 
-    <div class="error-msg" id="errorMsg">
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="#fca5a5"><path d="M7 0L14 14H0L7 0z" opacity=".8"/><rect x="6.3" y="5" width="1.4" height="5" rx=".7"/><circle cx="7" cy="12" r=".8"/></svg>
-      <span id="errorText">Username หรือ Password ไม่ถูกต้อง</span>
+    <div class="error-msg" id="errMsg">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="#991b1b"><path d="M7 1L13.9 13H0.1L7 1z"/><rect x="6.3" y="5" width="1.4" height="5" rx=".7"/><circle cx="7" cy="11.5" r=".8"/></svg>
+      <span id="errText">Username หรือ Password ไม่ถูกต้อง</span>
     </div>
 
-    <div class="form-group">
-      <label>Username</label>
-      <div class="input-wrap">
+    <div class="fg">
+      <label>Username / อีเมล</label>
+      <div class="iw">
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="8" cy="5.5" r="3"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>
-        <input type="text" id="username" placeholder="กรอก username" autocomplete="username">
+        <input type="text" id="username" placeholder="กรอก username หรืออีเมล" autocomplete="username">
       </div>
     </div>
 
-    <div class="form-group">
+    <div class="fg">
       <label>Password</label>
-      <div class="input-wrap">
+      <div class="iw">
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="3" y="7" width="10" height="7" rx="1"/><path d="M5 7V5a3 3 0 016 0v2"/></svg>
         <input type="password" id="password" placeholder="กรอก password" autocomplete="current-password">
-        <button class="toggle-pw" type="button" onclick="togglePassword()" id="toggleBtn">
+        <button class="eye-btn" type="button" onclick="togglePw()">
           <svg id="eyeIcon" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z"/><circle cx="8" cy="8" r="2"/></svg>
         </button>
       </div>
     </div>
 
-    <button class="btn-login" id="loginBtn" onclick="handleLogin()">
-      <div class="spinner"></div>
+    <button class="btn-login" id="loginBtn" onclick="doLogin()">
+      <div class="spin"></div>
       <span class="btn-text">เข้าสู่ระบบ</span>
     </button>
   </div>
 
-  <div class="login-footer">
-    MotoFix Pro &nbsp;·&nbsp; <span>v1.0.0</span>
-  </div>
+  <div class="footer">Ao Nang Automotive &nbsp;·&nbsp; ระบบจัดการร้าน v2.0</div>
 </div>
 
 <script>
-const API_BASE = 'http://localhost:5000/api';
+const API_BASE = 'https://motofix-backend.onrender.com/api';
 
-// ── Enter key ──
-document.addEventListener('keydown', e => {
-  if (e.key === 'Enter') handleLogin();
-});
+document.addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
 
-// ── Toggle password ──
-function togglePassword() {
-  const input = document.getElementById('password');
-  const icon  = document.getElementById('eyeIcon');
-  if (input.type === 'password') {
-    input.type = 'text';
-    icon.innerHTML = `<path d="M2 2l12 12M6.5 6.6A3 3 0 0110.4 9.5M5.4 5.4A7 7 0 001 8s2.5 5 7 5a6.9 6.9 0 003.6-1M8 3c4.5 0 7 5 7 5a12 12 0 01-1.9 2.5" stroke="currentColor" stroke-width="1.4" fill="none"/>`;
+function togglePw(){
+  const inp=document.getElementById('password');
+  const ico=document.getElementById('eyeIcon');
+  if(inp.type==='password'){
+    inp.type='text';
+    ico.innerHTML=`<path d="M2 2l12 12M6.5 6.6A3 3 0 0110.4 9.5M5.4 5.4A7 7 0 001 8s2.5 5 7 5a6.9 6.9 0 003.6-1M8 3c4.5 0 7 5 7 5a12 12 0 01-1.9 2.5" stroke="currentColor" stroke-width="1.4" fill="none"/>`;
   } else {
-    input.type = 'password';
-    icon.innerHTML = `<path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z" stroke="currentColor" stroke-width="1.4" fill="none"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.4" fill="none"/>`;
+    inp.type='password';
+    ico.innerHTML=`<path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z" stroke="currentColor" stroke-width="1.4" fill="none"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.4" fill="none"/>`;
   }
 }
 
-// ── Login ──
-async function handleLogin() {
-  const username = document.getElementById('username').value.trim();
-  const password = document.getElementById('password').value;
-  const btn      = document.getElementById('loginBtn');
-  const errorMsg = document.getElementById('errorMsg');
+async function doLogin(){
+  const username=document.getElementById('username').value.trim();
+  const password=document.getElementById('password').value;
+  const btn=document.getElementById('loginBtn');
+  const err=document.getElementById('errMsg');
 
-  // Hide error
-  errorMsg.classList.remove('show');
-
-  // Validate
-  if (!username || !password) {
-    showError('กรุณากรอก Username และ Password');
-    if (!username) document.getElementById('username').classList.add('error');
-    if (!password) document.getElementById('password').classList.add('error');
+  err.classList.remove('show');
+  if(!username||!password){
+    showErr('กรุณากรอก Username และ Password');
     return;
   }
 
-  // Loading state
-  btn.classList.add('loading');
-  btn.disabled = true;
+  btn.classList.add('loading'); btn.disabled=true;
 
   try {
-    const res = await fetch(`${API_BASE}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password }),
+    const res = await fetch(`${API_BASE}/auth/login`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({username, password}),
     });
-
     const data = await res.json();
+    if(!res.ok){ showErr(data.error||'เข้าสู่ระบบไม่สำเร็จ'); return; }
 
-    if (!res.ok) {
-      showError(data.error || 'เข้าสู่ระบบไม่สำเร็จ');
-      return;
-    }
-
-    // บันทึก token
     localStorage.setItem('motofix_token', data.token);
-    localStorage.setItem('motofix_user',  JSON.stringify({
-      _id:      data._id,
-      name:     data.name,
-      username: data.username,
-      role:     data.role,
-    }));
-
-    // Redirect ไป Dashboard
+    localStorage.setItem('motofix_user', JSON.stringify({_id:data._id,name:data.name,username:data.username,role:data.role}));
     window.location.href = 'index.html';
-
   } catch {
-    showError('ไม่สามารถเชื่อมต่อ Server ได้ กรุณาตรวจสอบ Backend');
+    showErr('ไม่สามารถเชื่อมต่อ Server ได้ กรุณาตรวจสอบ Backend');
   } finally {
-    btn.classList.remove('loading');
-    btn.disabled = false;
+    btn.classList.remove('loading'); btn.disabled=false;
   }
 }
 
-function showError(msg) {
-  document.getElementById('errorText').textContent = msg;
-  document.getElementById('errorMsg').classList.add('show');
+function showErr(msg){
+  document.getElementById('errText').textContent=msg;
+  document.getElementById('errMsg').classList.add('show');
 }
 
-// ── Clear error on input ──
-['username','password'].forEach(id => {
-  document.getElementById(id).addEventListener('input', () => {
-    document.getElementById(id).classList.remove('error');
-    document.getElementById('errorMsg').classList.remove('show');
+['username','password'].forEach(id=>{
+  document.getElementById(id).addEventListener('input',()=>{
+    document.getElementById(id).classList.remove('err');
+    document.getElementById('errMsg').classList.remove('show');
   });
 });
 
-// ── ถ้า Login แล้ว redirect เลย ──
-if (localStorage.getItem('motofix_token')) {
-  window.location.href = 'index.html';
-}
+if(localStorage.getItem('motofix_token')){ window.location.href='index.html'; }
 </script>
 </body>
 </html>
