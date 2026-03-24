@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ลูกค้า — Ao Nang Automotive</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/style.css">
+<style>
+.customers-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.customer-card{background:var(--bg-white);border:1px solid var(--border);border-radius:var(--radius);padding:16px;cursor:pointer;transition:all 0.15s}
+.customer-card:hover{border-color:var(--primary);box-shadow:0 2px 8px rgba(0,0,0,0.06)}
+.cc-ava{width:44px;height:44px;border-radius:50%;background:var(--primary-dim);border:1px solid var(--primary-border);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:var(--primary);margin-bottom:12px}
+.cc-name{font-size:14px;font-weight:700;color:var(--text-900);margin-bottom:3px}
+.cc-phone{font-size:12px;color:var(--text-400);font-family:var(--mono);margin-bottom:12px}
+.cc-stats{display:flex;gap:12px}
+.cc-stat{text-align:center}
+.cc-stat-val{font-size:20px;font-weight:700;color:var(--text-900)}
+.cc-stat-label{font-size:10px;color:var(--text-400)}
+.cc-divider{width:1px;background:var(--border)}
+.cc-last{font-size:11px;color:var(--text-400);margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+</style>
+</head>
+<body>
+<div class="app-shell" id="appShell"></div>
+<script src="../js/api.js"></script>
+<script src="../js/shared.js"></script>
+<script>
+const CUSTOMERS=[
+  {name:'สมชาย ใจดี',phone:'081-234-5678',jobs:5,spent:4250,last:'2025-03-22',bikes:'Honda Wave 125i'},
+  {name:'มานี รักดี',phone:'089-876-5432',jobs:2,spent:1100,last:'2025-03-22',bikes:'Yamaha NMAX'},
+  {name:'วิชัย แข็งแรง',phone:'087-111-2222',jobs:8,spent:9600,last:'2025-03-21',bikes:'Honda PCX'},
+  {name:'นิดา สดใส',phone:'086-333-4444',jobs:3,spent:2040,last:'2025-03-21',bikes:'Suzuki Smash'},
+  {name:'ประยุทธ มั่นคง',phone:'085-555-6666',jobs:1,spent:1500,last:'2025-03-20',bikes:'Kawasaki Z250'},
+  {name:'สุรีย์ ฝันหวาน',phone:'084-777-8888',jobs:4,spent:1800,last:'2025-03-20',bikes:'Honda Click'},
+];
+document.getElementById('appShell').innerHTML=`
+  ${getSidebar('customers','../')}
+  <main class="main-content">
+    ${getTopbar('ลูกค้า','',`
+      <div class="search-wrap" style="width:210px">
+        <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="6" r="4.5"/><line x1="9.7" y1="9.7" x2="13" y2="13"/></svg>
+        <input type="text" id="custSearch" placeholder="ค้นหาลูกค้า...">
+      </div>
+      <button class="btn-primary" onclick="alert('เพิ่มลูกค้าใหม่')">+ เพิ่มลูกค้า</button>
+    `)}
+    <div class="content-area">
+      <div class="customers-grid fade-in" id="custGrid"></div>
+    </div>
+  </main>`;
+function renderCustomers(data){
+  document.getElementById('custGrid').innerHTML=data.map(c=>`
+    <div class="customer-card fade-in">
+      <div class="cc-ava">${c.name.slice(0,1)}</div>
+      <div class="cc-name">${c.name}</div>
+      <div class="cc-phone">${c.phone}</div>
+      <div class="cc-stats">
+        <div class="cc-stat"><div class="cc-stat-val">${c.jobs}</div><div class="cc-stat-label">ครั้ง</div></div>
+        <div class="cc-divider"></div>
+        <div class="cc-stat"><div class="cc-stat-val">฿${(c.spent/1000).toFixed(1)}k</div><div class="cc-stat-label">รวมจ่าย</div></div>
+      </div>
+      <div class="cc-last">รถ: ${c.bikes} · ล่าสุด ${c.last}</div>
+    </div>`).join('');
+}
+document.addEventListener('DOMContentLoaded',()=>{
+  checkAuth('../');
+  renderCustomers(CUSTOMERS);
+  document.getElementById('custSearch').addEventListener('input',e=>{
+    const q=e.target.value.toLowerCase();
+    renderCustomers(q?CUSTOMERS.filter(c=>c.name.toLowerCase().includes(q)||c.phone.includes(q)):CUSTOMERS);
+  });
+});
+</script>
+</body>
+</html>

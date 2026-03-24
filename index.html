@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ao Nang Automotive — Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<style>
+.main-grid { display: grid; grid-template-columns: 1fr 310px; gap: 14px; }
+.right-col { display: flex; flex-direction: column; gap: 14px; }
+.parts-row { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid #f9fafb; }
+.parts-row:last-child { border-bottom: none; }
+.part-bar { width: 3px; height: 34px; border-radius: 2px; flex-shrink: 0; }
+.part-name { font-size: 13px; font-weight: 600; color: var(--text-900); }
+.part-qty { font-size: 11px; font-weight: 400; color: var(--text-400); font-family: var(--mono); }
+.part-tag { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 5px; white-space: nowrap; }
+.bar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 9px; }
+.bar-day { font-size: 12px; font-weight: 600; color: var(--text-500); width: 50px; flex-shrink: 0; }
+.bar-track { flex: 1; height: 7px; background: #f3f4f6; border-radius: 4px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 4px; background: var(--primary); transition: width 0.6s cubic-bezier(.16,1,.3,1); }
+.bar-fill.top { background: var(--green); }
+.bar-amt { font-family: var(--mono); font-size: 11.5px; font-weight: 500; color: var(--text-700); width: 48px; text-align: right; }
+.action-btn { background: none; border: 1px solid var(--border); border-radius: 6px; padding: 4px 10px; font-size: 11.5px; font-weight: 500; color: var(--text-500); cursor: pointer; transition: all 0.15s; }
+.action-btn:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-dim); }
+.shop-info { background: var(--primary-dim); border: 1px solid var(--primary-border); border-radius: var(--radius); padding: 12px 16px; margin-bottom: 16px; display: flex; align-items: center; gap: 12px; }
+.shop-info-text { font-size: 12px; font-weight: 500; color: #92400e; }
+.shop-info-name { font-size: 14px; font-weight: 700; color: #7c2d12; margin-bottom: 2px; }
+</style>
+</head>
+<body>
+<div class="app-shell" id="appShell"></div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 class="modal-title">งานซ่อมใหม่</h2>
+      <button class="modal-close" onclick="closeNewJobModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group"><label>ชื่อลูกค้า <span class="req">*</span></label><input type="text" id="f-customer" placeholder="ชื่อ-นามสกุล"></div>
+        <div class="form-group"><label>เบอร์โทร</label><input type="text" id="f-phone" placeholder="08x-xxx-xxxx"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>ทะเบียนรถ <span class="req">*</span></label><input type="text" id="f-plate" placeholder="กทบ 1234"></div>
+        <div class="form-group"><label>ยี่ห้อ / รุ่น</label><input type="text" id="f-model" placeholder="Honda Wave 125i"></div>
+      </div>
+      <div class="form-group"><label>รายละเอียด <span class="req">*</span></label><textarea id="f-detail" rows="3" placeholder="รายละเอียดงานซ่อม..."></textarea></div>
+      <div class="form-row">
+        <div class="form-group"><label>ค่าบริการ (บาท)</label><input type="number" id="f-price" placeholder="0"></div>
+        <div class="form-group"><label>สถานะ</label>
+          <select id="f-status"><option value="waiting">รอดำเนินการ</option><option value="progress">กำลังซ่อม</option></select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-ghost" onclick="closeNewJobModal()">ยกเลิก</button>
+      <button class="btn-primary" onclick="submitJob()">บันทึกงานซ่อม</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/shared.js"></script>
+<script>
+const STATUS_LABEL = { waiting:'รอดำเนินการ', progress:'กำลังซ่อม', done:'เสร็จแล้ว' };
+
+document.getElementById('appShell').innerHTML = `
+  ${getSidebar('dashboard')}
+  <main class="main-content">
+    ${getTopbar('Dashboard', '', `
+      <div class="search-wrap">
+        <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="6" r="4.5"/><line x1="9.7" y1="9.7" x2="13" y2="13"/></svg>
+        <input type="text" id="globalSearch" placeholder="ค้นหา ลูกค้า / ทะเบียน...">
+      </div>
+      <button class="btn-primary" onclick="openNewJobModal()">
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="6.5" y1="1" x2="6.5" y2="12"/><line x1="1" y1="6.5" x2="12" y2="6.5"/></svg>
+        งานซ่อมใหม่
+      </button>
+    `)}
+    <div class="content-area" id="contentArea">
+      <div class="shop-info fade-in" style="--d:.02s">
+        <div class="logo-mark" style="width:44px;height:44px;border-radius:10px;flex-shrink:0">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M12 2L4 8v13h5v-6h6v6h5V8L12 2z" fill="#fff"/><circle cx="12" cy="10.5" r="2.5" fill="#fed7aa"/></svg>
+        </div>
+        <div>
+          <div class="shop-info-name">Ao Nang Automotive — อ่าวนางยานยนต์</div>
+          <div class="shop-info-text">188 ม.2 ต.อ่าวนาง อ.เมือง จ.กระบี่ 81180 &nbsp;|&nbsp; โทร. 081-0827810</div>
+        </div>
+      </div>
+
+      <div class="alert-banner fade-in" id="alertBanner" style="display:none;--d:.03s">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="#991b1b"><path d="M7 1L13.9 13H0.1L7 1z"/><rect x="6.3" y="5" width="1.4" height="4.5" rx=".7"/><circle cx="7" cy="11.5" r=".8"/></svg>
+        <span id="alertText"></span>
+        <button class="alert-close" onclick="this.parentElement.style.display='none'">✕</button>
+      </div>
+
+      <div class="stats-grid" id="statsGrid">
+        <div class="stat-card fade-in" style="--d:.05s">
+          <div class="stat-icon ic-blue"><svg width="20" height="20" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="14" height="12" rx="1.5"/><line x1="2" y1="7" x2="16" y2="7"/><line x1="6" y1="1" x2="6" y2="5"/><line x1="12" y1="1" x2="12" y2="5"/></svg></div>
+          <div><div class="stat-label">งานซ่อมวันนี้</div><div class="stat-value" data-stat="today">—</div><div class="stat-sub delta-muted" id="sub-today">กำลังโหลด</div></div>
+        </div>
+        <div class="stat-card fade-in" style="--d:.08s">
+          <div class="stat-icon ic-amber"><svg width="20" height="20" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="9" r="7"/><polyline points="9,5 9,9 12,11"/></svg></div>
+          <div><div class="stat-label">รอดำเนินการ</div><div class="stat-value" data-stat="pending">—</div><div class="stat-sub delta-muted">รถรอรับ</div></div>
+        </div>
+        <div class="stat-card fade-in" style="--d:.11s">
+          <div class="stat-icon ic-green"><svg width="20" height="20" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="9" y1="2" x2="9" y2="16"/><path d="M5 5.5h5.5a2.5 2.5 0 010 5H6a2.5 2.5 0 000 5H13"/></svg></div>
+          <div><div class="stat-label">รายได้เดือนนี้</div><div class="stat-value" data-stat="revenue">—</div><div class="stat-sub delta-up" id="sub-revenue">กำลังโหลด</div></div>
+        </div>
+        <div class="stat-card fade-in" style="--d:.14s">
+          <div class="stat-icon ic-red"><svg width="20" height="20" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="8" width="12" height="8" rx="1"/><path d="M6 8V6a3 3 0 016 0v2"/></svg></div>
+          <div><div class="stat-label">อะไหล่ใกล้หมด</div><div class="stat-value" data-stat="lowpart" style="color:var(--red)">—</div><div class="stat-sub delta-danger">ต้องสั่งเพิ่ม</div></div>
+        </div>
+      </div>
+
+      <div class="main-grid">
+        <div class="panel fade-in" style="--d:.17s">
+          <div class="panel-header">
+            <div class="panel-title"><span class="dot dot-blue"></span>รายการงานซ่อม</div>
+            <div style="display:flex;align-items:center;gap:10px">
+              <div class="filter-group">
+                <button class="filter-btn active" data-filter="all">ทั้งหมด</button>
+                <button class="filter-btn" data-filter="waiting">รอ</button>
+                <button class="filter-btn" data-filter="progress">กำลังซ่อม</button>
+                <button class="filter-btn" data-filter="done">เสร็จ</button>
+              </div>
+              <a href="pages/jobs.html" class="panel-link">ดูทั้งหมด →</a>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead><tr><th>Job ID</th><th>ลูกค้า</th><th>ทะเบียน</th><th>งานซ่อม</th><th>สถานะ</th><th>ค่าบริการ</th><th></th></tr></thead>
+              <tbody id="jobTbody"><tr><td colspan="7" style="text-align:center;padding:24px;color:var(--text-400)">กำลังโหลด...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="right-col">
+          <div class="panel fade-in" style="--d:.2s">
+            <div class="panel-header">
+              <div class="panel-title"><span class="dot dot-red"></span>สถานะอะไหล่</div>
+              <a href="pages/parts.html" class="panel-link">จัดการ →</a>
+            </div>
+            <div id="partsList"><div style="padding:16px;text-align:center;font-size:13px;color:var(--text-400)">กำลังโหลด...</div></div>
+          </div>
+          <div class="panel fade-in" style="--d:.23s">
+            <div class="panel-header">
+              <div class="panel-title"><span class="dot dot-green"></span>รายได้รายสัปดาห์</div>
+              <span id="weekTotal" style="font-family:var(--mono);font-size:12px;font-weight:600;color:var(--green)"></span>
+            </div>
+            <div style="padding:14px 16px" id="chartArea"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>`;
+
+let allJobs = [];
+
+document.addEventListener('DOMContentLoaded', async () => {
+  checkAuth();
+  await Promise.all([loadStats(), loadJobs(), loadParts(), loadChart()]);
+  setupFilter();
+  setupSearch();
+});
+
+async function loadStats() {
+  try {
+    const s = await api.getStats();
+    animCount('[data-stat="today"]', s.todayJobs, false);
+    animCount('[data-stat="pending"]', s.pendingJobs, false);
+    animCount('[data-stat="revenue"]', s.monthlyRevenue, true);
+    animCount('[data-stat="lowpart"]', s.lowParts, false);
+    document.getElementById('sub-today').textContent = 'วันนี้';
+    document.getElementById('sub-revenue').textContent = 'เดือนนี้';
+    if (s.lowParts > 0) {
+      const low = await api.getLowStock();
+      document.getElementById('alertText').innerHTML = `อะไหล่ใกล้หมด ${s.lowParts} รายการ: <strong>${low.map(p=>p.name).join(', ')}</strong>`;
+      document.getElementById('alertBanner').style.display = 'flex';
+    }
+  } catch(e) { console.error(e); }
+}
+
+function animCount(sel, target, isCurrency) {
+  const el = document.querySelector(sel); if (!el) return;
+  let s = 0; const inc = target / 60;
+  const t = setInterval(() => {
+    s = Math.min(s + inc, target);
+    el.textContent = isCurrency ? '฿' + Math.round(s).toLocaleString('th-TH') : Math.round(s);
+    if (s >= target) clearInterval(t);
+  }, 14);
+}
+
+async function loadJobs() {
+  try {
+    allJobs = await api.getJobs();
+    renderJobs(allJobs);
+    const p = allJobs.filter(j => j.status !== 'done').length;
+    const b = document.getElementById('badge-jobs');
+    if (b) b.textContent = p;
+  } catch(e) { console.error(e); }
+}
+
+function renderJobs(jobs) {
+  const tbody = document.getElementById('jobTbody');
+  if (!jobs.length) { tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--text-400);font-size:13px">ไม่พบรายการงานซ่อม</td></tr>`; return; }
+  tbody.innerHTML = jobs.slice(0,6).map(j => `
+    <tr>
+      <td class="job-id">#${j.jobId}</td>
+      <td><div class="cname">${j.customer?.name||'-'}</div><div class="cphone">${j.customer?.phone||'-'}</div></td>
+      <td><span class="plate-tag">${j.plate}</span></td>
+      <td style="font-size:12px;color:var(--text-500);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${j.detail}</td>
+      <td><span class="badge badge-${j.status}">${STATUS_LABEL[j.status]}</span></td>
+      <td class="price-val">฿${j.price.toLocaleString('th-TH')}</td>
+      <td><button class="action-btn">ดู</button></td>
+    </tr>`).join('');
+}
+
+function setupFilter() {
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const f = btn.dataset.filter;
+      renderJobs(f === 'all' ? allJobs : allJobs.filter(j => j.status === f));
+    });
+  });
+}
+
+function setupSearch() {
+  document.getElementById('globalSearch')?.addEventListener('input', e => {
+    const q = e.target.value.toLowerCase();
+    renderJobs(q ? allJobs.filter(j => j.customer?.name?.toLowerCase().includes(q) || j.plate?.toLowerCase().includes(q) || j.jobId?.toLowerCase().includes(q)) : allJobs);
+  });
+}
+
+async function loadParts() {
+  try {
+    const parts = await api.getParts();
+    const el = document.getElementById('partsList');
+    if (!parts.length) { el.innerHTML = `<div style="padding:14px;text-align:center;font-size:13px;color:var(--text-400)">ยังไม่มีอะไหล่</div>`; return; }
+    const colors = { critical:'#dc2626', warning:'#d97706', ok:'#16a34a' };
+    const tagClass = { critical:'background:#fef2f2;color:#991b1b', warning:'background:#fffbeb;color:#92400e', ok:'background:#f0fdf4;color:#166534' };
+    const tagLabel = { critical:'ใกล้หมด!', warning:'พอใช้', ok:'ปกติ' };
+    el.innerHTML = parts.slice(0,5).map(p => `
+      <div class="parts-row">
+        <div class="part-bar" style="background:${colors[p.status]||'#9ca3af'}"></div>
+        <div style="flex:1">
+          <div class="part-name">${p.name}</div>
+          <div class="part-qty">คงเหลือ: ${p.qty} ${p.unit}</div>
+        </div>
+        <span class="part-tag" style="${tagClass[p.status]||''}">${tagLabel[p.status]||p.status}</span>
+      </div>`).join('');
+    const b = document.getElementById('badge-parts');
+    if (b) b.textContent = parts.filter(p=>p.status!=='ok').length || '';
+  } catch(e) { console.error(e); }
+}
+
+async function loadChart() {
+  try {
+    const data = await api.getRevenueWeek();
+    const max = Math.max(...data.map(r=>r.amount), 1);
+    const total = data.reduce((s,r)=>s+r.amount, 0);
+    document.getElementById('weekTotal').textContent = '฿' + total.toLocaleString('th-TH');
+    const el = document.getElementById('chartArea');
+    el.innerHTML = data.map(r => {
+      const pct = Math.round((r.amount/max)*100);
+      const isTop = r.amount === max;
+      return `<div class="bar-row">
+        <span class="bar-day">${r.day}</span>
+        <div class="bar-track"><div class="bar-fill ${isTop?'top':''}" style="width:0" data-p="${pct}"></div></div>
+        <span class="bar-amt">฿${(r.amount/1000).toFixed(1)}k</span>
+      </div>`;
+    }).join('');
+    setTimeout(() => el.querySelectorAll('.bar-fill').forEach(b => b.style.width = b.dataset.p + '%'), 100);
+  } catch(e) { console.error(e); }
+}
+
+function openNewJobModal() { document.getElementById('modalOverlay').classList.add('active'); }
+function closeNewJobModal() { document.getElementById('modalOverlay').classList.remove('active'); }
+function closeModal(e) { if (e.target===document.getElementById('modalOverlay')) closeNewJobModal(); }
+
+async function submitJob() {
+  const c = document.getElementById('f-customer').value.trim();
+  const pl = document.getElementById('f-plate').value.trim();
+  const d = document.getElementById('f-detail').value.trim();
+  if (!c||!pl||!d) return;
+  try {
+    await api.createJob({ customerName:c, phone:document.getElementById('f-phone').value.trim(), plate:pl.toUpperCase(), model:document.getElementById('f-model').value.trim(), detail:d, price:parseInt(document.getElementById('f-price').value)||0, status:document.getElementById('f-status').value });
+    closeNewJobModal();
+    await loadJobs(); await loadStats();
+  } catch(e) { alert('เกิดข้อผิดพลาด'); }
+}
+document.addEventListener('keydown', e => { if(e.key==='Escape') closeNewJobModal(); });
+</script>
+</body>
+</html>

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ใบแจ้งหนี้ — Ao Nang Automotive</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<div class="app-shell" id="appShell"></div>
+<script src="../js/api.js"></script>
+<script src="../js/shared.js"></script>
+<script>
+const INVOICES=[
+  {no:'INV-0010',customer:'วิชัย แข็งแรง',job:'เปลี่ยนยางหน้า-หลัง',date:'2025-03-21',amount:1200,paid:true},
+  {no:'INV-0009',customer:'นิดา สดใส',job:'ซ่อมไฟหน้า + แบต',date:'2025-03-21',amount:680,paid:true},
+  {no:'INV-0008',customer:'สมชาย ใจดี',job:'เปลี่ยนโซ่ + น้ำมัน',date:'2025-03-22',amount:850,paid:false},
+  {no:'INV-0007',customer:'มานี รักดี',job:'ตรวจเช็กเครื่องยนต์',date:'2025-03-22',amount:500,paid:false},
+];
+document.getElementById('appShell').innerHTML=`
+  ${getSidebar('invoices','../')}
+  <main class="main-content">
+    ${getTopbar('ใบแจ้งหนี้','',`<button class="btn-primary" onclick="alert('สร้างใบแจ้งหนี้ใหม่')">+ สร้างใบแจ้งหนี้</button>`)}
+    <div class="content-area">
+      <div class="panel fade-in">
+        <div class="panel-header"><div class="panel-title"><span class="dot dot-blue"></span>รายการใบแจ้งหนี้</div></div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>เลขที่</th><th>ลูกค้า</th><th>งานซ่อม</th><th>วันที่</th><th>ยอดรวม</th><th>สถานะ</th><th></th></tr></thead>
+            <tbody>${INVOICES.map(inv=>`
+              <tr>
+                <td class="job-id">${inv.no}</td>
+                <td class="cname">${inv.customer}</td>
+                <td style="font-size:12px;color:var(--text-500)">${inv.job}</td>
+                <td style="font-size:12px;color:var(--text-400);font-family:var(--mono)">${inv.date}</td>
+                <td class="price-val">฿${inv.amount.toLocaleString('th-TH')}</td>
+                <td><span class="badge ${inv.paid?'badge-done':'badge-waiting'}">${inv.paid?'ชำระแล้ว':'รอชำระ'}</span></td>
+                <td><button class="action-btn" onclick="alert('พิมพ์ ${inv.no}')">พิมพ์</button></td>
+              </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>`;
+document.addEventListener('DOMContentLoaded',()=>{ checkAuth('../'); });
+</script>
+</body>
+</html>
