@@ -8,53 +8,86 @@
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../css/style.css">
 <style>
-.parts-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px}
-.part-card{background:var(--bg-white);border:1px solid var(--border);border-radius:var(--radius);padding:16px;transition:all 0.15s;position:relative;overflow:hidden}
+.parts-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+.part-card{background:var(--bg-white);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:all 0.15s;position:relative}
 .part-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
 .part-card.critical::before{background:var(--red)}
 .part-card.warning::before{background:var(--amber)}
 .part-card.ok::before{background:var(--green)}
-.part-card:hover{box-shadow:0 2px 8px rgba(0,0,0,0.08)}
-.pc-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px}
-.pc-name{font-size:14px;font-weight:700;color:var(--text-900)}
-.pc-cat{font-size:11px;color:var(--text-400);margin-top:2px}
-.pc-badge{font-size:11px;font-weight:600;padding:3px 9px;border-radius:10px;white-space:nowrap}
-.pc-badge.critical{background:var(--red-dim);color:#991b1b}
-.pc-badge.warning{background:var(--amber-dim);color:#92400e}
-.pc-badge.ok{background:var(--green-dim);color:#166534}
-.pc-qty{display:flex;align-items:baseline;gap:6px;margin-bottom:10px}
-.pc-qty-val{font-size:32px;font-weight:700;color:var(--text-900);line-height:1;font-family:var(--mono)}
-.pc-qty-unit{font-size:13px;color:var(--text-500)}
-.pc-qty-min{font-size:11px;color:var(--text-400);margin-left:auto;font-family:var(--mono)}
-.pc-progress{height:5px;background:var(--bg-surface);border-radius:3px;margin-bottom:12px}
-.pc-bar{height:100%;border-radius:3px}
-.pc-bar.critical{background:var(--red)}
-.pc-bar.warning{background:var(--amber)}
-.pc-bar.ok{background:var(--green)}
-.pc-footer{display:flex;gap:8px}
-.pc-btn{flex:1;padding:8px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;cursor:pointer;text-align:center;transition:all 0.15s;font-family:var(--font)}
-.pc-btn-primary{background:var(--primary-dim);color:var(--primary);border:1px solid var(--primary-border)}
-.pc-btn-primary:hover{background:var(--primary);color:#fff}
-.pc-btn-ghost{background:none;border:1px solid var(--border);color:var(--text-500)}
-.pc-btn-ghost:hover{border-color:var(--primary);color:var(--primary)}
-.sum3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.part-card:hover{box-shadow:0 4px 12px rgba(0,0,0,0.08);transform:translateY(-2px)}
+.part-img{width:100%;height:160px;object-fit:cover;background:#f3f4f6;display:block}
+.part-img-placeholder{width:100%;height:160px;background:#f3f4f6;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px}
+.part-img-placeholder svg{color:#d1d5db}
+.part-img-placeholder span{font-size:11px;color:var(--text-400)}
+.part-body{padding:14px}
+.part-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px}
+.part-name{font-size:13.5px;font-weight:700;color:var(--text-900);line-height:1.3}
+.part-cat{font-size:11px;color:var(--text-400);margin-top:2px}
+.part-badge{font-size:11px;font-weight:600;padding:3px 9px;border-radius:10px;white-space:nowrap;flex-shrink:0;margin-left:8px}
+.part-badge.critical{background:var(--red-dim);color:#991b1b}
+.part-badge.warning{background:var(--amber-dim);color:#92400e}
+.part-badge.ok{background:var(--green-dim);color:#166534}
+.part-qty-row{display:flex;align-items:baseline;gap:6px;margin:8px 0}
+.part-qty-val{font-size:28px;font-weight:700;color:var(--text-900);font-family:var(--mono);line-height:1}
+.part-qty-unit{font-size:13px;color:var(--text-500)}
+.part-qty-min{font-size:11px;color:var(--text-400);margin-left:auto;font-family:var(--mono)}
+.part-progress{height:5px;background:var(--bg-surface);border-radius:3px;margin-bottom:10px}
+.part-bar{height:100%;border-radius:3px}
+.part-bar.critical{background:var(--red)}
+.part-bar.warning{background:var(--amber)}
+.part-bar.ok{background:var(--green)}
+.part-price{font-size:12px;color:var(--text-500);margin-bottom:10px;font-family:var(--mono)}
+.part-footer{display:flex;gap:8px}
+.pbtn{flex:1;padding:7px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;text-align:center;transition:all 0.15s;font-family:var(--font);border:1px solid}
+.pbtn-primary{background:var(--primary-dim);color:var(--primary);border-color:var(--primary-border)}
+.pbtn-primary:hover{background:var(--primary);color:#fff}
+.pbtn-ghost{background:none;border-color:var(--border);color:var(--text-500)}
+.pbtn-ghost:hover{border-color:var(--primary);color:var(--primary)}
+.sum3{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.cat-filter{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.cat-btn{padding:5px 12px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--border);background:var(--bg-white);color:var(--text-500);transition:all 0.15s;font-family:var(--font)}
+.cat-btn.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.cat-btn:hover:not(.active){border-color:var(--primary);color:var(--primary)}
+/* Modal image preview */
+.img-preview{width:100%;height:200px;object-fit:cover;border-radius:8px;margin-top:8px;display:none}
+.img-preview.show{display:block}
+.img-placeholder-preview{width:100%;height:200px;background:#f3f4f6;border-radius:8px;display:flex;align-items:center;justify-content:center;margin-top:8px;font-size:13px;color:var(--text-400)}
 </style>
 </head>
 <body>
 <div class="app-shell" id="appShell"></div>
+
+<!-- ADD/EDIT MODAL -->
 <div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this)closeModal()">
-  <div class="modal">
-    <div class="modal-header"><h2 class="modal-title">เพิ่มอะไหล่ใหม่</h2><button class="modal-close" onclick="closeModal()">✕</button></div>
+  <div class="modal" style="width:560px">
+    <div class="modal-header">
+      <h2 class="modal-title" id="modalTitle">เพิ่มอะไหล่ใหม่</h2>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
     <div class="modal-body">
-      <div class="form-group"><label>ชื่ออะไหล่ <span class="req">*</span></label><input type="text" id="p-name" placeholder="เช่น น้ำมันเครื่อง 10W-40"></div>
       <div class="form-row">
-        <div class="form-group"><label>จำนวน <span class="req">*</span></label><input type="number" id="p-qty" placeholder="0"></div>
+        <div class="form-group"><label>ชื่ออะไหล่ <span class="req">*</span></label><input type="text" id="p-name" placeholder="เช่น น้ำมันเครื่อง 10W-40"></div>
+        <div class="form-group"><label>หมวดหมู่</label><input type="text" id="p-cat" placeholder="น้ำมัน / เบรค / ยาง..."></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>จำนวนคงเหลือ <span class="req">*</span></label><input type="number" id="p-qty" placeholder="0" min="0"></div>
         <div class="form-group"><label>หน่วย</label><input type="text" id="p-unit" placeholder="ลิตร / ชิ้น / อัน"></div>
       </div>
       <div class="form-row">
-        <div class="form-group"><label>จำนวนขั้นต่ำ</label><input type="number" id="p-min" placeholder="5"></div>
-        <div class="form-group"><label>หมวดหมู่</label><input type="text" id="p-cat" placeholder="เครื่องยนต์ / เบรค..."></div>
+        <div class="form-group"><label>จำนวนขั้นต่ำ (แจ้งเตือน)</label><input type="number" id="p-min" placeholder="5" min="0"></div>
+        <div class="form-group"><label>ราคาต่อหน่วย (บาท)</label><input type="number" id="p-price" placeholder="0" min="0"></div>
       </div>
+      <div class="form-group">
+        <label>URL รูปภาพอะไหล่</label>
+        <input type="text" id="p-img" placeholder="https://..." oninput="previewImg(this.value)">
+        <div style="margin-top:8px">
+          <img id="imgPreview" class="img-preview" src="" alt="preview" onerror="this.style.display='none'">
+          <div id="imgPlaceholder" class="img-placeholder-preview">
+            <span>วาง URL รูปภาพเพื่อดูตัวอย่าง</span>
+          </div>
+        </div>
+      </div>
+      <input type="hidden" id="p-id">
     </div>
     <div class="modal-footer">
       <button class="btn-ghost" onclick="closeModal()">ยกเลิก</button>
@@ -62,70 +95,294 @@
     </div>
   </div>
 </div>
+
+<!-- RESTOCK MODAL -->
+<div class="modal-overlay" id="restockOverlay" onclick="if(event.target===this)closeRestock()">
+  <div class="modal" style="width:380px">
+    <div class="modal-header"><h2 class="modal-title">เติมสต็อก</h2><button class="modal-close" onclick="closeRestock()">✕</button></div>
+    <div class="modal-body">
+      <div style="font-size:14px;font-weight:600;color:var(--text-900);margin-bottom:12px" id="restockName"></div>
+      <div class="form-group">
+        <label>จำนวนที่เพิ่ม <span class="req">*</span></label>
+        <input type="number" id="r-qty" placeholder="0" min="1">
+      </div>
+      <input type="hidden" id="r-id">
+    </div>
+    <div class="modal-footer">
+      <button class="btn-ghost" onclick="closeRestock()">ยกเลิก</button>
+      <button class="btn-primary" onclick="submitRestock()">เติมสต็อก</button>
+    </div>
+  </div>
+</div>
+
 <script src="../js/api.js"></script>
 <script src="../js/shared.js"></script>
 <script>
-let PARTS=[
-  {_id:'1',name:'น้ำมันเครื่อง 10W-40',category:'น้ำมัน',qty:2,minQty:10,unit:'ลิตร',status:'critical'},
-  {_id:'2',name:'ผ้าเบรคหน้า Honda',category:'เบรค',qty:1,minQty:5,unit:'ชิ้น',status:'critical'},
-  {_id:'3',name:'หัวเทียน NGK',category:'เครื่องยนต์',qty:8,minQty:10,unit:'อัน',status:'warning'},
-  {_id:'4',name:'โซ่ 428H',category:'ส่งกำลัง',qty:15,minQty:5,unit:'เส้น',status:'ok'},
-  {_id:'5',name:'ยาง Michelin',category:'ยาง',qty:4,minQty:2,unit:'เส้น',status:'ok'},
-  {_id:'6',name:'ไส้กรองอากาศ',category:'กรอง',qty:6,minQty:3,unit:'ชิ้น',status:'ok'},
-];
-function getStatus(p){if(p.qty===0||p.qty<p.minQty*0.3)return'critical';if(p.qty<p.minQty)return'warning';return'ok';}
-document.getElementById('appShell').innerHTML=`
-  ${getSidebar('parts','../')}
+const STORAGE_KEY = 'aonang_parts';
+let PARTS = [];
+let filteredParts = [];
+let currentCat = 'ทั้งหมด';
+
+function loadParts() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  PARTS = raw ? JSON.parse(raw) : getDefaultParts();
+  if (!raw) saveParts();
+}
+function saveParts() { localStorage.setItem(STORAGE_KEY, JSON.stringify(PARTS)); }
+function getStatus(p) { if (p.qty === 0) return 'critical'; if (p.qty < p.minQty * 0.5) return 'critical'; if (p.qty < p.minQty) return 'warning'; return 'ok'; }
+
+document.getElementById('appShell').innerHTML = `
+  ${getSidebar('parts', '../')}
   <main class="main-content">
-    ${getTopbar('คลังอะไหล่','',`
+    ${getTopbar('คลังอะไหล่', '', `
       <div class="search-wrap" style="width:210px">
         <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="6" r="4.5"/><line x1="9.7" y1="9.7" x2="13" y2="13"/></svg>
         <input type="text" id="partsSearch" placeholder="ค้นหาอะไหล่...">
       </div>
-      <button class="btn-primary" onclick="document.getElementById('modalOverlay').classList.add('active')">+ เพิ่มอะไหล่</button>
+      <button class="btn-primary" onclick="openAddModal()">+ เพิ่มอะไหล่</button>
     `)}
     <div class="content-area">
       <div class="sum3 fade-in">
-        <div class="stat-card"><div class="stat-icon ic-orange"><svg width="20" height="20" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="8" width="12" height="8" rx="1"/><path d="M6 8V6a3 3 0 016 0v2"/></svg></div><div><div class="stat-label">อะไหล่ทั้งหมด</div><div class="stat-value" id="totalP">0</div></div></div>
-        <div class="stat-card"><div class="stat-icon ic-red"><svg width="20" height="20" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 2L17 16H1L9 2z"/><rect x="8.3" y="7" width="1.4" height="5" rx=".7"/><circle cx="9" cy="14" r=".8"/></svg></div><div><div class="stat-label">ใกล้หมด</div><div class="stat-value" id="lowP" style="color:var(--red)">0</div></div></div>
-        <div class="stat-card"><div class="stat-icon ic-green"><svg width="20" height="20" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="3,10 7,14 15,4"/></svg></div><div><div class="stat-label">ปกติ</div><div class="stat-value" id="okP" style="color:var(--green)">0</div></div></div>
+        <div class="stat-card"><div class="stat-icon ic-orange"><svg width="20" height="20" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="8" width="12" height="8" rx="1"/><path d="M6 8V6a3 3 0 016 0v2"/></svg></div><div><div class="stat-label">อะไหล่ทั้งหมด</div><div class="stat-value" id="statTotal">0</div><div class="stat-sub delta-muted">รายการ</div></div></div>
+        <div class="stat-card"><div class="stat-icon ic-red"><svg width="20" height="20" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 2L17 16H1L9 2z"/><rect x="8.3" y="7" width="1.4" height="5" rx=".7"/><circle cx="9" cy="14" r=".8"/></svg></div><div><div class="stat-label">ใกล้หมด / หมด</div><div class="stat-value" id="statLow" style="color:var(--red)">0</div><div class="stat-sub delta-danger">ต้องสั่งเพิ่ม</div></div></div>
+        <div class="stat-card"><div class="stat-icon ic-amber"><svg width="20" height="20" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="9" r="7"/><line x1="9" y1="6" x2="9" y2="9.5"/><circle cx="9" cy="12" r=".8"/></svg></div><div><div class="stat-label">พอใช้</div><div class="stat-value" id="statWarn" style="color:var(--amber)">0</div><div class="stat-sub delta-muted">รายการ</div></div></div>
+        <div class="stat-card"><div class="stat-icon ic-green"><svg width="20" height="20" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="3,10 7,14 15,4"/></svg></div><div><div class="stat-label">สต็อกปกติ</div><div class="stat-value" id="statOk" style="color:var(--green)">0</div><div class="stat-sub delta-up">รายการ</div></div></div>
       </div>
-      <div id="alertParts" style="margin-bottom:12px"></div>
+      <div id="alertBannerParts" style="margin-bottom:12px"></div>
+      <div class="cat-filter fade-in" id="catFilter"></div>
       <div class="parts-grid fade-in" id="partsGrid"></div>
     </div>
   </main>`;
-function renderParts(data){
-  document.getElementById('totalP').textContent=data.length;
-  document.getElementById('lowP').textContent=data.filter(p=>getStatus(p)!=='ok').length;
-  document.getElementById('okP').textContent=data.filter(p=>getStatus(p)==='ok').length;
-  const critical=data.filter(p=>getStatus(p)!=='ok');
-  document.getElementById('alertParts').innerHTML=critical.length?`<div class="alert-banner"><svg width="14" height="14" viewBox="0 0 14 14" fill="#991b1b"><path d="M7 1L13.9 13H0.1L7 1z"/><rect x="6.3" y="5" width="1.4" height="5" rx=".7"/><circle cx="7" cy="11.5" r=".8"/></svg><span>อะไหล่ใกล้หมด <strong>${critical.length} รายการ</strong>: ${critical.map(p=>p.name).join(', ')}</span></div>`:'';
-  const tag={critical:'ใกล้หมด!',warning:'พอใช้',ok:'ปกติ'};
-  document.getElementById('partsGrid').innerHTML=data.map(p=>{
-    const st=getStatus(p);const pct=Math.min(Math.round((p.qty/(p.minQty*2))*100),100);
-    return `<div class="part-card ${st}">
-      <div class="pc-header"><div><div class="pc-name">${p.name}</div><div class="pc-cat">${p.category||'อะไหล่'}</div></div><span class="pc-badge ${st}">${tag[st]}</span></div>
-      <div class="pc-qty"><span class="pc-qty-val">${p.qty}</span><span class="pc-qty-unit">${p.unit}</span><span class="pc-qty-min">ขั้นต่ำ: ${p.minQty}</span></div>
-      <div class="pc-progress"><div class="pc-bar ${st}" style="width:${pct}%"></div></div>
-      <div class="pc-footer">
-        <button class="pc-btn pc-btn-primary" onclick="restock('${p._id}','${p.name}')">+ เติมสต็อก</button>
-        <button class="pc-btn pc-btn-ghost">แก้ไข</button>
-      </div>
-    </div>`;}).join('');
-}
-function restock(id,name){const q=prompt(`เติมสต็อก "${name}" จำนวนเท่าไร?`,'10');if(!q||isNaN(q))return;const p=PARTS.find(x=>x._id===id);if(p){p.qty+=parseInt(q);renderParts(PARTS);}}
-document.addEventListener('DOMContentLoaded',()=>{
+
+document.addEventListener('DOMContentLoaded', () => {
   checkAuth('../');
-  renderParts(PARTS);
-  document.getElementById('partsSearch').addEventListener('input',e=>{const q=e.target.value.toLowerCase();renderParts(q?PARTS.filter(p=>p.name.toLowerCase().includes(q)):PARTS);});
+  loadParts();
+  renderAll();
+  document.getElementById('partsSearch').addEventListener('input', e => {
+    const q = e.target.value.toLowerCase();
+    filteredParts = PARTS.filter(p =>
+      (currentCat === 'ทั้งหมด' || p.category === currentCat) &&
+      (!q || p.name.toLowerCase().includes(q))
+    );
+    renderGrid(filteredParts);
+  });
 });
-function closeModal(){document.getElementById('modalOverlay').classList.remove('active');}
-function submitPart(){
-  const name=document.getElementById('p-name').value.trim();
-  const qty=parseInt(document.getElementById('p-qty').value)||0;
-  if(!name)return;
-  PARTS.push({_id:Date.now().toString(),name,qty,minQty:parseInt(document.getElementById('p-min').value)||5,unit:document.getElementById('p-unit').value||'ชิ้น',category:document.getElementById('p-cat').value||'อื่นๆ',status:'ok'});
-  renderParts(PARTS);closeModal();
+
+function renderAll() {
+  filteredParts = currentCat === 'ทั้งหมด' ? [...PARTS] : PARTS.filter(p => p.category === currentCat);
+  renderStats();
+  renderAlert();
+  renderCatFilter();
+  renderGrid(filteredParts);
+}
+
+function renderStats() {
+  document.getElementById('statTotal').textContent = PARTS.length;
+  document.getElementById('statLow').textContent = PARTS.filter(p => getStatus(p) === 'critical').length;
+  document.getElementById('statWarn').textContent = PARTS.filter(p => getStatus(p) === 'warning').length;
+  document.getElementById('statOk').textContent = PARTS.filter(p => getStatus(p) === 'ok').length;
+}
+
+function renderAlert() {
+  const critical = PARTS.filter(p => getStatus(p) === 'critical');
+  document.getElementById('alertBannerParts').innerHTML = critical.length ? `
+    <div class="alert-banner">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="#991b1b"><path d="M7 1L13.9 13H0.1L7 1z"/><rect x="6.3" y="5" width="1.4" height="4.5" rx=".7"/><circle cx="7" cy="11.5" r=".8"/></svg>
+      <span>อะไหล่ใกล้หมด/หมด <strong>${critical.length} รายการ</strong>: ${critical.slice(0,3).map(p=>p.name).join(', ')}${critical.length>3?` และอีก ${critical.length-3} รายการ`:''}</span>
+    </div>` : '';
+}
+
+function renderCatFilter() {
+  const cats = ['ทั้งหมด', ...new Set(PARTS.map(p => p.category).filter(Boolean))];
+  document.getElementById('catFilter').innerHTML = cats.map(c => `
+    <button class="cat-btn ${c===currentCat?'active':''}" onclick="selectCat('${c}')">${c} ${c==='ทั้งหมด'?`(${PARTS.length})`:`(${PARTS.filter(p=>p.category===c).length})`}</button>
+  `).join('');
+}
+
+function selectCat(cat) {
+  currentCat = cat;
+  document.getElementById('partsSearch').value = '';
+  renderAll();
+}
+
+function renderGrid(parts) {
+  const tag = { critical:'ใกล้หมด!', warning:'พอใช้', ok:'ปกติ' };
+  document.getElementById('partsGrid').innerHTML = !parts.length ?
+    `<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text-400);font-size:14px">ไม่พบอะไหล่</div>` :
+    parts.map(p => {
+      const st = getStatus(p);
+      const pct = Math.min(Math.round((p.qty / Math.max(p.minQty * 2, 1)) * 100), 100);
+      const imgHtml = p.imageUrl
+        ? `<img src="${p.imageUrl}" class="part-img" alt="${p.name}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+          + `<div class="part-img-placeholder" style="display:none"><svg width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="5" width="26" height="22" rx="2"/><circle cx="11" cy="13" r="3"/><path d="M3 22l7-6 5 5 4-4 10 7"/></svg><span>ไม่พบรูปภาพ</span></div>`
+        : `<div class="part-img-placeholder"><svg width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="5" width="26" height="22" rx="2"/><circle cx="11" cy="13" r="3"/><path d="M3 22l7-6 5 5 4-4 10 7"/></svg><span>ยังไม่มีรูปภาพ</span></div>`;
+      return `
+      <div class="part-card ${st}">
+        ${imgHtml}
+        <div class="part-body">
+          <div class="part-top">
+            <div>
+              <div class="part-name">${p.name}</div>
+              <div class="part-cat">${p.category||'อะไหล่'}</div>
+            </div>
+            <span class="part-badge ${st}">${tag[st]}</span>
+          </div>
+          <div class="part-qty-row">
+            <span class="part-qty-val">${p.qty}</span>
+            <span class="part-qty-unit">${p.unit}</span>
+            <span class="part-qty-min">ขั้นต่ำ: ${p.minQty}</span>
+          </div>
+          <div class="part-progress"><div class="part-bar ${st}" style="width:${pct}%"></div></div>
+          <div class="part-price">ราคา: ฿${p.price.toLocaleString('th-TH')} / ${p.unit}</div>
+          <div class="part-footer">
+            <button class="pbtn pbtn-primary" onclick="openRestock('${p._id}','${p.name}',${p.qty})">+ เติมสต็อก</button>
+            <button class="pbtn pbtn-ghost" onclick="openEditModal('${p._id}')">แก้ไข</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+}
+
+// ── Modal Add/Edit ──
+function openAddModal() {
+  document.getElementById('modalTitle').textContent = 'เพิ่มอะไหล่ใหม่';
+  ['p-name','p-cat','p-qty','p-unit','p-min','p-price','p-img','p-id'].forEach(id => { document.getElementById(id).value = ''; });
+  document.getElementById('imgPreview').style.display = 'none';
+  document.getElementById('imgPlaceholder').style.display = 'flex';
+  document.getElementById('modalOverlay').classList.add('active');
+}
+
+function openEditModal(id) {
+  const p = PARTS.find(x => x._id === id);
+  if (!p) return;
+  document.getElementById('modalTitle').textContent = 'แก้ไขอะไหล่';
+  document.getElementById('p-id').value = p._id;
+  document.getElementById('p-name').value = p.name;
+  document.getElementById('p-cat').value = p.category || '';
+  document.getElementById('p-qty').value = p.qty;
+  document.getElementById('p-unit').value = p.unit;
+  document.getElementById('p-min').value = p.minQty;
+  document.getElementById('p-price').value = p.price;
+  document.getElementById('p-img').value = p.imageUrl || '';
+  previewImg(p.imageUrl || '');
+  document.getElementById('modalOverlay').classList.add('active');
+}
+
+function previewImg(url) {
+  const img = document.getElementById('imgPreview');
+  const ph = document.getElementById('imgPlaceholder');
+  if (url && url.startsWith('http')) {
+    img.src = url;
+    img.style.display = 'block';
+    ph.style.display = 'none';
+  } else {
+    img.style.display = 'none';
+    ph.style.display = 'flex';
+  }
+}
+
+function closeModal() { document.getElementById('modalOverlay').classList.remove('active'); }
+
+function submitPart() {
+  const name = document.getElementById('p-name').value.trim();
+  const qty  = parseInt(document.getElementById('p-qty').value) || 0;
+  if (!name) return;
+  const id = document.getElementById('p-id').value;
+  const data = {
+    name,
+    category: document.getElementById('p-cat').value.trim() || 'อื่นๆ',
+    qty,
+    unit:     document.getElementById('p-unit').value.trim() || 'ชิ้น',
+    minQty:   parseInt(document.getElementById('p-min').value) || 5,
+    price:    parseInt(document.getElementById('p-price').value) || 0,
+    imageUrl: document.getElementById('p-img').value.trim() || '',
+  };
+  if (id) {
+    const idx = PARTS.findIndex(p => p._id === id);
+    if (idx > -1) { PARTS[idx] = { ...PARTS[idx], ...data }; }
+  } else {
+    PARTS.push({ _id: Date.now().toString(), ...data });
+  }
+  saveParts();
+  renderAll();
+  closeModal();
+}
+
+// ── Restock Modal ──
+function openRestock(id, name, qty) {
+  document.getElementById('r-id').value = id;
+  document.getElementById('restockName').textContent = `${name} (คงเหลือ: ${qty} ชิ้น)`;
+  document.getElementById('r-qty').value = '';
+  document.getElementById('restockOverlay').classList.add('active');
+}
+function closeRestock() { document.getElementById('restockOverlay').classList.remove('active'); }
+function submitRestock() {
+  const id  = document.getElementById('r-id').value;
+  const qty = parseInt(document.getElementById('r-qty').value);
+  if (!qty || qty < 1) return;
+  const p = PARTS.find(x => x._id === id);
+  if (p) { p.qty += qty; saveParts(); renderAll(); }
+  closeRestock();
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closeModal(); closeRestock(); }
+});
+
+// ── Default Parts Data ──
+function getDefaultParts() {
+  return [
+  {_id:'p01',name:'น้ำมันเครื่อง 10W-40 (1L)',category:'น้ำมัน',qty:2,minQty:10,unit:'ลิตร',price:180,imageUrl:'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop'},
+  {_id:'p02',name:'น้ำมันเครื่อง 20W-50 (1L)',category:'น้ำมัน',qty:0,minQty:8,unit:'ลิตร',price:160,imageUrl:'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop'},
+  {_id:'p03',name:'น้ำมันเกียร์ SAE90',category:'น้ำมัน',qty:3,minQty:10,unit:'ลิตร',price:120,imageUrl:''},
+  {_id:'p04',name:'น้ำมันโช้คอัพ',category:'น้ำมัน',qty:15,minQty:5,unit:'ลิตร',price:90,imageUrl:''},
+  {_id:'p05',name:'น้ำมันเบรค DOT4',category:'น้ำมัน',qty:8,minQty:5,unit:'ขวด',price:120,imageUrl:''},
+  {_id:'p06',name:'ผ้าเบรคหน้า Honda Wave',category:'เบรค',qty:1,minQty:5,unit:'ชิ้น',price:250,imageUrl:'https://images.unsplash.com/photo-1609630875171-b1321377ee65?w=400&h=300&fit=crop'},
+  {_id:'p07',name:'ผ้าเบรคหลัง Honda Wave',category:'เบรค',qty:3,minQty:5,unit:'ชิ้น',price:220,imageUrl:''},
+  {_id:'p08',name:'ผ้าเบรคหน้า Yamaha NMAX',category:'เบรค',qty:4,minQty:5,unit:'ชิ้น',price:350,imageUrl:''},
+  {_id:'p09',name:'ผ้าเบรคหลัง Yamaha',category:'เบรค',qty:6,minQty:5,unit:'ชิ้น',price:280,imageUrl:''},
+  {_id:'p10',name:'ดิสเบรคหน้า Honda PCX',category:'เบรค',qty:2,minQty:3,unit:'ชิ้น',price:1800,imageUrl:''},
+  {_id:'p11',name:'หัวเทียน NGK CR7HSA',category:'เครื่องยนต์',qty:24,minQty:10,unit:'อัน',price:120,imageUrl:'https://images.unsplash.com/photo-1567789884554-0b844b597180?w=400&h=300&fit=crop'},
+  {_id:'p12',name:'หัวเทียน NGK CPR8EA-9',category:'เครื่องยนต์',qty:18,minQty:8,unit:'อัน',price:150,imageUrl:''},
+  {_id:'p13',name:'ไส้กรองอากาศ Honda Wave',category:'เครื่องยนต์',qty:12,minQty:5,unit:'ชิ้น',price:180,imageUrl:''},
+  {_id:'p14',name:'ไส้กรองอากาศ Yamaha',category:'เครื่องยนต์',qty:10,minQty:5,unit:'ชิ้น',price:200,imageUrl:''},
+  {_id:'p15',name:'ไส้กรองน้ำมัน Honda PCX',category:'เครื่องยนต์',qty:8,minQty:4,unit:'ชิ้น',price:280,imageUrl:''},
+  {_id:'p16',name:'ลูกสูบ Honda Wave 125',category:'เครื่องยนต์',qty:5,minQty:2,unit:'ชิ้น',price:850,imageUrl:''},
+  {_id:'p17',name:'แหวนลูกสูบ Honda 125',category:'เครื่องยนต์',qty:8,minQty:3,unit:'ชุด',price:450,imageUrl:''},
+  {_id:'p18',name:'ฝาสูบ Honda Wave',category:'เครื่องยนต์',qty:3,minQty:2,unit:'ชิ้น',price:1200,imageUrl:''},
+  {_id:'p19',name:'โซ่ 428H (มาตรฐาน)',category:'ส่งกำลัง',qty:20,minQty:5,unit:'เส้น',price:350,imageUrl:'https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=400&h=300&fit=crop'},
+  {_id:'p20',name:'โซ่ 428H (เสริม)',category:'ส่งกำลัง',qty:15,minQty:5,unit:'เส้น',price:420,imageUrl:''},
+  {_id:'p21',name:'สเตอร์หน้า Honda Wave',category:'ส่งกำลัง',qty:10,minQty:4,unit:'ชิ้น',price:280,imageUrl:''},
+  {_id:'p22',name:'สเตอร์หลัง Honda Wave',category:'ส่งกำลัง',qty:8,minQty:3,unit:'ชิ้น',price:380,imageUrl:''},
+  {_id:'p23',name:'สายพาน Yamaha NMAX',category:'ส่งกำลัง',qty:6,minQty:3,unit:'เส้น',price:950,imageUrl:''},
+  {_id:'p24',name:'คลัตช์อัตโนมัติ Yamaha Mio',category:'ส่งกำลัง',qty:4,minQty:2,unit:'ชุด',price:1500,imageUrl:''},
+  {_id:'p25',name:'ยาง Michelin 70/90-17',category:'ยาง',qty:8,minQty:4,unit:'เส้น',price:850,imageUrl:'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop'},
+  {_id:'p26',name:'ยาง Michelin 80/90-17',category:'ยาง',qty:6,minQty:4,unit:'เส้น',price:950,imageUrl:''},
+  {_id:'p27',name:'ยาง IRC 100/80-14',category:'ยาง',qty:4,minQty:3,unit:'เส้น',price:1100,imageUrl:''},
+  {_id:'p28',name:'ยาง Dunlop 110/70-13',category:'ยาง',qty:3,minQty:3,unit:'เส้น',price:1250,imageUrl:''},
+  {_id:'p29',name:'ยางใน 70/90-17',category:'ยาง',qty:20,minQty:8,unit:'เส้น',price:180,imageUrl:''},
+  {_id:'p30',name:'ยางใน 80/90-17',category:'ยาง',qty:15,minQty:6,unit:'เส้น',price:200,imageUrl:''},
+  {_id:'p31',name:'แบตเตอรี่ 12V 3Ah',category:'ไฟฟ้า',qty:2,minQty:5,unit:'ลูก',price:650,imageUrl:'https://images.unsplash.com/photo-1609091839311-d5365f9ff1c5?w=400&h=300&fit=crop'},
+  {_id:'p32',name:'แบตเตอรี่ 12V 5Ah',category:'ไฟฟ้า',qty:3,minQty:5,unit:'ลูก',price:850,imageUrl:''},
+  {_id:'p33',name:'หลอดไฟหน้า H4 12V',category:'ไฟฟ้า',qty:15,minQty:5,unit:'หลอด',price:120,imageUrl:''},
+  {_id:'p34',name:'หลอดไฟหน้า LED',category:'ไฟฟ้า',qty:8,minQty:4,unit:'หลอด',price:350,imageUrl:''},
+  {_id:'p35',name:'ขดลวดไดชาร์จ Honda',category:'ไฟฟ้า',qty:3,minQty:2,unit:'ชิ้น',price:1800,imageUrl:''},
+  {_id:'p36',name:'สวิตช์ไฟเลี้ยว',category:'ไฟฟ้า',qty:10,minQty:4,unit:'ชิ้น',price:280,imageUrl:''},
+  {_id:'p37',name:'โช้คหน้า Honda Wave',category:'ช่วงล่าง',qty:4,minQty:2,unit:'คู่',price:1200,imageUrl:''},
+  {_id:'p38',name:'โช้คหลัง Honda Wave',category:'ช่วงล่าง',qty:4,minQty:2,unit:'คู่',price:950,imageUrl:''},
+  {_id:'p39',name:'โช้คหลัง Yamaha',category:'ช่วงล่าง',qty:3,minQty:2,unit:'คู่',price:1100,imageUrl:''},
+  {_id:'p40',name:'ลูกปืนล้อหน้า',category:'ช่วงล่าง',qty:10,minQty:4,unit:'ลูก',price:180,imageUrl:''},
+  {_id:'p41',name:'ลูกปืนล้อหลัง',category:'ช่วงล่าง',qty:10,minQty:4,unit:'ลูก',price:200,imageUrl:''},
+  {_id:'p42',name:'น๊อต M6 (แพ็ค 50 ตัว)',category:'อุปกรณ์',qty:30,minQty:5,unit:'แพ็ค',price:80,imageUrl:''},
+  {_id:'p43',name:'น๊อต M8 (แพ็ค 50 ตัว)',category:'อุปกรณ์',qty:25,minQty:5,unit:'แพ็ค',price:100,imageUrl:''},
+  {_id:'p44',name:'สายเบรค Honda Wave',category:'อุปกรณ์',qty:8,minQty:3,unit:'เส้น',price:180,imageUrl:''},
+  {_id:'p45',name:'สายคลัตช์ Honda',category:'อุปกรณ์',qty:6,minQty:3,unit:'เส้น',price:160,imageUrl:''},
+  {_id:'p46',name:'กริปมือจับ (คู่)',category:'อุปกรณ์',qty:12,minQty:4,unit:'คู่',price:120,imageUrl:''},
+  {_id:'p47',name:'แผ่นกันโคลน Honda',category:'อุปกรณ์',qty:5,minQty:2,unit:'ชิ้น',price:350,imageUrl:''},
+  {_id:'p48',name:'กระดาษทราย (แพ็ค)',category:'สิ้นเปลือง',qty:20,minQty:5,unit:'แพ็ค',price:50,imageUrl:''},
+  {_id:'p49',name:'น้ำยาล้างเครื่องยนต์',category:'สิ้นเปลือง',qty:10,minQty:3,unit:'ขวด',price:120,imageUrl:''},
+  {_id:'p50',name:'ผ้าเช็ดทำความสะอาด',category:'สิ้นเปลือง',qty:50,minQty:10,unit:'ผืน',price:15,imageUrl:''},
+  ];
 }
 </script>
 </body>
