@@ -1,16 +1,14 @@
 // ─── API CONFIG ───
 const API_BASE = 'https://motofix-backend.onrender.com/api';
 
-// ── ดึง token จาก localStorage ──
 const getToken = () => localStorage.getItem('motofix_token');
 
-// ── headers พร้อม Auth ──
 const authHeaders = () => ({
   'Content-Type': 'application/json',
   'Authorization': `Bearer ${getToken()}`,
 });
 
-// ── จัดการ response + auth error ──
+// ผลลัพธ์ response — throw เมื่อเกิด error เพื่อให้ caller จัดการได้ถูกต้อง
 const handleRes = async (res) => {
   if (res.status === 401) {
     localStorage.removeItem('motofix_token');
@@ -18,7 +16,9 @@ const handleRes = async (res) => {
     window.location.href = '/login.html';
     return;
   }
-  return res.json();
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'เกิดข้อผิดพลาด');
+  return data;
 };
 
 const api = {
@@ -85,6 +85,20 @@ const api = {
     return handleRes(res);
   },
 
+  async updateCustomer(id, data) {
+    const res = await fetch(`${API_BASE}/customers/${id}`, {
+      method: 'PATCH', headers: authHeaders(), body: JSON.stringify(data),
+    });
+    return handleRes(res);
+  },
+
+  async deleteCustomer(id) {
+    const res = await fetch(`${API_BASE}/customers/${id}`, {
+      method: 'DELETE', headers: authHeaders(),
+    });
+    return handleRes(res);
+  },
+
   // ── PARTS ──
   async getParts() {
     const res = await fetch(`${API_BASE}/parts`, { headers: authHeaders() });
@@ -99,6 +113,20 @@ const api = {
   async createPart(data) {
     const res = await fetch(`${API_BASE}/parts`, {
       method: 'POST', headers: authHeaders(), body: JSON.stringify(data),
+    });
+    return handleRes(res);
+  },
+
+  async updatePart(id, data) {
+    const res = await fetch(`${API_BASE}/parts/${id}`, {
+      method: 'PATCH', headers: authHeaders(), body: JSON.stringify(data),
+    });
+    return handleRes(res);
+  },
+
+  async deletePart(id) {
+    const res = await fetch(`${API_BASE}/parts/${id}`, {
+      method: 'DELETE', headers: authHeaders(),
     });
     return handleRes(res);
   },
