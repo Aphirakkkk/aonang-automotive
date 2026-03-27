@@ -7,15 +7,26 @@ const SHOP = {
   phone:   '081-0827810',
 };
 
+function _getUserDisplay() {
+  try {
+    const u = JSON.parse(localStorage.getItem('motofix_user') || '{}');
+    const name = u.name || u.username || 'เจ้าของร้าน';
+    const initial = name.slice(0, 1).toUpperCase();
+    return { name, initial };
+  } catch { return { name: 'เจ้าของร้าน', initial: 'อ' }; }
+}
+
 function getSidebar(activePage = 'dashboard', prefix = '') {
   const pages = {
-    dashboard: { href: `${prefix}index.html`,         label: 'Dashboard' },
-    ledger:    { href: `${prefix}pages/ledger.html`,   label: 'บัญชีรายวัน' },
-    jobs:      { href: `${prefix}pages/jobs.html`,     label: 'งานซ่อม' },
-    customers: { href: `${prefix}pages/customers.html`,label: 'ลูกค้า' },
-    parts:     { href: `${prefix}pages/parts.html`,    label: 'คลังอะไหล่' },
-    invoices:  { href: `${prefix}pages/invoices.html`, label: 'ใบแจ้งหนี้' },
+    dashboard: { href: `${prefix}index.html`,          label: 'Dashboard' },
+    ledger:    { href: `${prefix}pages/ledger.html`,    label: 'บัญชีรายวัน' },
+    jobs:      { href: `${prefix}pages/jobs.html`,      label: 'งานซ่อม' },
+    customers: { href: `${prefix}pages/customers.html`, label: 'ลูกค้า' },
+    parts:     { href: `${prefix}pages/parts.html`,     label: 'คลังอะไหล่' },
+    invoices:  { href: `${prefix}pages/invoices.html`,  label: 'ใบแจ้งหนี้' },
   };
+
+  const user = _getUserDisplay();
 
   return `
   <aside class="sidebar" id="sidebar">
@@ -48,7 +59,7 @@ function getSidebar(activePage = 'dashboard', prefix = '') {
       <a href="${pages.jobs.href}" class="nav-item ${activePage==='jobs'?'active':''}">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="1.5"/><line x1="5" y1="5" x2="11" y2="5"/><line x1="5" y1="8" x2="11" y2="8"/><line x1="5" y1="11" x2="8" y2="11"/></svg>
         งานซ่อม
-        <span class="nav-badge" id="badge-jobs">0</span>
+        <span class="nav-badge" id="badge-jobs"></span>
       </a>
 
       <a href="${pages.customers.href}" class="nav-item ${activePage==='customers'?'active':''}">
@@ -61,7 +72,7 @@ function getSidebar(activePage = 'dashboard', prefix = '') {
       <a href="${pages.parts.href}" class="nav-item ${activePage==='parts'?'active':''}">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="7" width="12" height="7" rx="1"/><path d="M5 7V5a3 3 0 016 0v2"/></svg>
         คลังอะไหล่
-        <span class="nav-badge" id="badge-parts">0</span>
+        <span class="nav-badge" id="badge-parts"></span>
       </a>
 
       <a href="${pages.invoices.href}" class="nav-item ${activePage==='invoices'?'active':''}">
@@ -72,11 +83,14 @@ function getSidebar(activePage = 'dashboard', prefix = '') {
 
     <div class="sidebar-footer">
       <div class="user-row">
-        <div class="user-ava">อ</div>
-        <div>
-          <div class="user-name">เจ้าของร้าน</div>
+        <div class="user-ava">${user.initial}</div>
+        <div style="flex:1;min-width:0">
+          <div class="user-name" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${user.name}</div>
           <div class="user-tel">${SHOP.phone}</div>
         </div>
+        <button onclick="api.logout()" title="ออกจากระบบ" style="background:none;border:1px solid var(--border);border-radius:6px;cursor:pointer;padding:5px 6px;color:var(--text-400);transition:all 0.15s;flex-shrink:0" onmouseover="this.style.color='var(--red)';this.style.borderColor='#fca5a5'" onmouseout="this.style.color='var(--text-400)';this.style.borderColor='var(--border)'">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11 10l3-3-3-3"/><line x1="14" y1="7" x2="6" y2="7"/><path d="M6 3H3a1 1 0 00-1 1v8a1 1 0 001 1h3"/></svg>
+        </button>
       </div>
     </div>
   </aside>`;
@@ -104,7 +118,7 @@ function getTopbar(title, subtitle = '', extraBtns = '') {
 // Auth guard
 function checkAuth(prefix = '') {
   const token = localStorage.getItem('motofix_token');
-  if (!token) { window.location.href = prefix + 'login.html'; }
+  if (!token) { window.location.href = window._loginPath || (prefix + 'login.html'); }
 }
 
 // Menu toggle

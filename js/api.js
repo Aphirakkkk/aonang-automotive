@@ -8,12 +8,19 @@ const authHeaders = () => ({
   'Authorization': `Bearer ${getToken()}`,
 });
 
+// กำหนด login path ที่ถูกต้อง ไม่ว่าจะอยู่หน้าไหน
+(function() {
+  const path = window.location.pathname;
+  const depth = (path.match(/\//g) || []).length;
+  window._loginPath = depth > 1 ? '../login.html' : 'login.html';
+})();
+
 // ผลลัพธ์ response — throw เมื่อเกิด error เพื่อให้ caller จัดการได้ถูกต้อง
 const handleRes = async (res) => {
   if (res.status === 401) {
     localStorage.removeItem('motofix_token');
     localStorage.removeItem('motofix_user');
-    window.location.href = '/login.html';
+    window.location.href = window._loginPath;
     return;
   }
   const data = await res.json();
@@ -36,7 +43,7 @@ const api = {
   logout() {
     localStorage.removeItem('motofix_token');
     localStorage.removeItem('motofix_user');
-    window.location.href = 'login.html';
+    window.location.href = window._loginPath;
   },
 
   getUser() {
@@ -154,6 +161,34 @@ const api = {
   async payInvoice(id) {
     const res = await fetch(`${API_BASE}/invoices/${id}/pay`, {
       method: 'PATCH', headers: authHeaders(),
+    });
+    return handleRes(res);
+  },
+
+  // ── LEDGER ──
+  async getLedger(year, month) {
+    const url = (year !== undefined && month !== undefined)
+      ? `${API_BASE}/ledger?year=${year}&month=${month}`
+      : `${API_BASE}/ledger/all`;
+    const res = await fetch(url, { headers: authHeaders() });
+    return handleRes(res);
+  },
+
+  async getLedgerAll() {
+    const res = await fetch(`${API_BASE}/ledger/all`, { headers: authHeaders() });
+    return handleRes(res);
+  },
+
+  async createLedgerEntry(data) {
+    const res = await fetch(`${API_BASE}/ledger`, {
+      method: 'POST', headers: authHeaders(), body: JSON.stringify(data),
+    });
+    return handleRes(res);
+  },
+
+  async deleteLedgerEntry(id) {
+    const res = await fetch(`${API_BASE}/ledger/${id}`, {
+      method: 'DELETE', headers: authHeaders(),
     });
     return handleRes(res);
   },
