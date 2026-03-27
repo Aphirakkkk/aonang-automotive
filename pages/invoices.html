@@ -7,45 +7,236 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../css/style.css">
+<style>
+.inv-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.inv-card{background:var(--bg-white);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;display:flex;align-items:flex-start;gap:12px}
+.print-area{display:none}
+@media print{
+body *{visibility:hidden}
+.print-area,.print-area *{visibility:visible}
+.print-area{display:block!important;position:fixed;top:0;left:0;width:100%;padding:32px}
+}
+</style>
 </head>
 <body>
 <div class="app-shell" id="appShell"></div>
+<div class="modal-overlay" id="createModal" onclick="if(event.target===this)closeCreateModal()">
+  <div class="modal" style="width:520px">
+    <div class="modal-header">
+      <h2 class="modal-title">สร้างใบแจ้งหนี้</h2>
+      <button class="modal-close" onclick="closeCreateModal()">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>เลือกงานซ่อม <span class="req">*</span></label>
+        <select id="inv-job"><option value="">— เลือกงานซ่อม —</option></select>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>ยอดเงิน (บาท) <span class="req">*</span></label><input type="number" id="inv-amount" placeholder="0" min="0"></div>
+        <div class="form-group"><label>หมายเหตุ</label><input type="text" id="inv-note" placeholder="หมายเหตุเพิ่มเติม..."></div>
+      </div>
+      <div id="inv-job-info" style="display:none;background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;font-size:13px"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-ghost" onclick="closeCreateModal()">ยกเลิก</button>
+      <button class="btn-primary" id="createInvBtn" onclick="submitCreateInvoice()">สร้างใบแจ้งหนี้</button>
+    </div>
+  </div>
+</div>
+<div class="print-area" id="printArea"></div>
 <script src="../js/api.js"></script>
 <script src="../js/shared.js"></script>
 <script>
-const INVOICES=[
-  {no:'INV-0010',customer:'วิชัย แข็งแรง',job:'เปลี่ยนยางหน้า-หลัง',date:'2025-03-21',amount:1200,paid:true},
-  {no:'INV-0009',customer:'นิดา สดใส',job:'ซ่อมไฟหน้า + แบต',date:'2025-03-21',amount:680,paid:true},
-  {no:'INV-0008',customer:'สมชาย ใจดี',job:'เปลี่ยนโซ่ + น้ำมัน',date:'2025-03-22',amount:850,paid:false},
-  {no:'INV-0007',customer:'มานี รักดี',job:'ตรวจเช็กเครื่องยนต์',date:'2025-03-22',amount:500,paid:false},
-];
-document.getElementById('appShell').innerHTML=`
-  ${getSidebar('invoices','../')}
-  <main class="main-content">
-    ${getTopbar('ใบแจ้งหนี้','',`<button class="btn-primary" onclick="alert('สร้างใบแจ้งหนี้ใหม่')">+ สร้างใบแจ้งหนี้</button>`)}
-    <div class="content-area">
-      <div class="panel fade-in">
-        <div class="panel-header"><div class="panel-title"><span class="dot dot-blue"></span>รายการใบแจ้งหนี้</div></div>
-        <div class="table-wrap">
-          <table class="data-table">
-            <thead><tr><th>เลขที่</th><th>ลูกค้า</th><th>งานซ่อม</th><th>วันที่</th><th>ยอดรวม</th><th>สถานะ</th><th></th></tr></thead>
-            <tbody>${INVOICES.map(inv=>`
-              <tr>
-                <td class="job-id">${inv.no}</td>
-                <td class="cname">${inv.customer}</td>
-                <td style="font-size:12px;color:var(--text-500)">${inv.job}</td>
-                <td style="font-size:12px;color:var(--text-400);font-family:var(--mono)">${inv.date}</td>
-                <td class="price-val">฿${inv.amount.toLocaleString('th-TH')}</td>
-                <td><span class="badge ${inv.paid?'badge-done':'badge-waiting'}">${inv.paid?'ชำระแล้ว':'รอชำระ'}</span></td>
-                <td><button class="action-btn" onclick="alert('พิมพ์ ${inv.no}')">พิมพ์</button></td>
-              </tr>`).join('')}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  </main>`;
-document.addEventListener('DOMContentLoaded',()=>{ checkAuth('../'); });
+var allInvoices=[];
+var allJobs=[];
+
+function buildShell(){
+  document.getElementById('appShell').innerHTML =
+    getSidebar('invoices','../')+
+    '<main class="main-content">'+
+    getTopbar('ใบแจ้งหนี้','',
+      '<div class="search-wrap" style="width:210px">'+
+      '<svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="6" r="4.5"/><line x1="9.7" y1="9.7" x2="13" y2="13"/></svg>'+
+      '<input type="text" id="invSearch" placeholder="ค้นหาลูกค้า / ทะเบียน...">'+
+      '</div>'+
+      '<div class="filter-group">'+
+      '<button class="filter-btn active" data-filter="all">ทั้งหมด</button>'+
+      '<button class="filter-btn" data-filter="pending">รอชำระ</button>'+
+      '<button class="filter-btn" data-filter="paid">ชำระแล้ว</button>'+
+      '</div>'+
+      '<button class="btn-primary" onclick="openCreateModal()">+ สร้างใบแจ้งหนี้</button>'
+    )+
+    '<div class="content-area">'+
+    '<div class="inv-summary fade-in">'+
+    '<div class="inv-card"><div class="stat-icon ic-blue"><svg width="20" height="20" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="14" height="14" rx="1.5"/><line x1="5" y1="6" x2="13" y2="6"/><line x1="5" y1="9" x2="13" y2="9"/></svg></div><div><div class="stat-label">ใบแจ้งหนี้ทั้งหมด</div><div class="stat-value" id="statTotal">—</div></div></div>'+
+    '<div class="inv-card"><div class="stat-icon ic-amber"><svg width="20" height="20" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="9" r="7"/><polyline points="9,5 9,9 12,11"/></svg></div><div><div class="stat-label">ยอดรอชำระ</div><div class="stat-value" id="statPending" style="color:var(--amber)">—</div></div></div>'+
+    '<div class="inv-card"><div class="stat-icon ic-green"><svg width="20" height="20" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="3,10 7,14 15,4"/></svg></div><div><div class="stat-label">รายได้ชำระแล้ว</div><div class="stat-value" id="statRevenue" style="color:var(--green)">—</div></div></div>'+
+    '</div>'+
+    '<div class="panel fade-in" style="--d:.1s">'+
+    '<div class="panel-header"><div class="panel-title"><span class="dot dot-blue"></span>รายการใบแจ้งหนี้</div><span id="invCount" style="font-size:12px;color:var(--text-400)"></span></div>'+
+    '<div class="table-wrap"><table class="data-table">'+
+    '<thead><tr><th>เลขที่</th><th>ลูกค้า</th><th>งานซ่อม</th><th>ทะเบียน</th><th>วันที่</th><th>ยอดรวม</th><th>สถานะ</th><th></th></tr></thead>'+
+    '<tbody id="invTbody"><tr><td colspan="8" style="text-align:center;padding:24px;color:var(--text-400)">กำลังโหลด...</td></tr></tbody>'+
+    '</table></div></div>'+
+    '</div></main>';
+}
+
+buildShell();
+
+document.addEventListener('DOMContentLoaded',function(){
+  checkAuth('../');
+  loadInvoices();
+  loadPendingJobs();
+  document.getElementById('invSearch').addEventListener('input',function(e){
+    var q=e.target.value.toLowerCase();
+    renderInvoices(q?allInvoices.filter(function(i){
+      return (i.customer&&i.customer.name||'').toLowerCase().includes(q)||
+             (i.job&&i.job.plate||'').toLowerCase().includes(q)||
+             (i.invoiceNo||'').toLowerCase().includes(q);
+    }):allInvoices);
+  });
+  document.querySelectorAll('.filter-btn').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      document.querySelectorAll('.filter-btn').forEach(function(b){b.classList.remove('active');});
+      btn.classList.add('active');
+      var f=btn.getAttribute('data-filter');
+      renderInvoices(f==='all'?allInvoices:f==='paid'?allInvoices.filter(function(i){return i.paid;}):allInvoices.filter(function(i){return !i.paid;}));
+    });
+  });
+});
+
+function loadInvoices(){
+  api.getInvoices().then(function(data){
+    allInvoices=data;
+    renderInvoices(allInvoices);
+    renderSummary(allInvoices);
+  }).catch(function(e){
+    document.getElementById('invTbody').innerHTML='<tr><td colspan="8" style="text-align:center;padding:24px;color:#dc2626">โหลดไม่สำเร็จ: '+e.message+'</td></tr>';
+  });
+}
+
+function loadPendingJobs(){
+  api.getJobs().then(function(jobs){
+    allJobs=jobs.filter(function(j){return j.status!=='done';});
+    var sel=document.getElementById('inv-job');
+    while(sel.options.length>1)sel.remove(1);
+    allJobs.forEach(function(j){
+      var opt=document.createElement('option');
+      opt.value=j._id;
+      opt.textContent='#'+j.jobId+' — '+(j.customer?j.customer.name:'-')+' ('+j.plate+') ฿'+(j.price||0).toLocaleString('th-TH');
+      sel.appendChild(opt);
+    });
+    sel.onchange=function(){
+      var j=allJobs.find(function(x){return x._id===sel.value;});
+      var info=document.getElementById('inv-job-info');
+      if(j){
+        document.getElementById('inv-amount').value=j.price||0;
+        info.style.display='block';
+        info.innerHTML='<strong>ลูกค้า:</strong> '+(j.customer?j.customer.name:'-')+'<br><strong>ทะเบียน:</strong> '+j.plate+'<br><strong>รายละเอียด:</strong> '+j.detail;
+      }else{
+        info.style.display='none';
+      }
+    };
+  }).catch(function(e){console.error(e);});
+}
+
+function renderSummary(invoices){
+  document.getElementById('statTotal').textContent=invoices.length;
+  var pendAmt=0,paidAmt=0;
+  invoices.forEach(function(i){if(i.paid)paidAmt+=i.amount;else pendAmt+=i.amount;});
+  document.getElementById('statPending').textContent='฿'+pendAmt.toLocaleString('th-TH');
+  document.getElementById('statRevenue').textContent='฿'+paidAmt.toLocaleString('th-TH');
+}
+
+function renderInvoices(invoices){
+  var tbody=document.getElementById('invTbody');
+  document.getElementById('invCount').textContent=invoices.length+' รายการ';
+  if(!invoices.length){
+    tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--text-400)">ยังไม่มีใบแจ้งหนี้</td></tr>';
+    return;
+  }
+  tbody.innerHTML=invoices.map(function(inv){
+    var no=inv.invoiceNo||('#'+inv._id.slice(-6).toUpperCase());
+    var payBtn=inv.paid?'':'<button class="action-btn" style="color:var(--green);border-color:#bbf7d0" onclick="markPaid('+JSON.stringify(inv._id)+')">&#x2713; ชำระ</button>';
+    return '<tr>'+
+      '<td class="job-id">'+no+'</td>'+
+      '<td><div class="cname">'+(inv.customer?inv.customer.name:'-')+'</div>'+
+      '<div class="cphone">'+(inv.customer?inv.customer.phone:'-')+'</div></td>'+
+      '<td style="font-size:12px;color:var(--text-500);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(inv.job?inv.job.detail:'-')+'</td>'+
+      '<td><span class="plate-tag">'+(inv.job?inv.job.plate:'-')+'</span></td>'+
+      '<td style="font-size:12px;color:var(--text-400);font-family:var(--mono)">'+(inv.createdAt||'').slice(0,10)+'</td>'+
+      '<td class="price-val">฿'+(inv.amount||0).toLocaleString('th-TH')+'</td>'+
+      '<td><span class="badge '+(inv.paid?'badge-done':'badge-waiting')+'">'+(inv.paid?'ชำระแล้ว':'รอชำระ')+'</span></td>'+
+      '<td style="display:flex;gap:4px">'+payBtn+
+      '<button class="action-btn" onclick="printInvoice('+JSON.stringify(inv._id)+')">พิมพ์</button></td>'+
+      '</tr>';
+  }).join('');
+}
+
+function openCreateModal(){document.getElementById('createModal').classList.add('active');}
+function closeCreateModal(){document.getElementById('createModal').classList.remove('active');}
+
+function submitCreateInvoice(){
+  var jobId=document.getElementById('inv-job').value;
+  var amount=parseInt(document.getElementById('inv-amount').value)||0;
+  var note=document.getElementById('inv-note').value.trim();
+  if(!jobId){alert('กรุณาเลือกงานซ่อม');return;}
+  if(!amount||amount<=0){alert('กรุณาระบุยอดเงิน');return;}
+  var btn=document.getElementById('createInvBtn');
+  btn.disabled=true;btn.textContent='กำลังบันทึก...';
+  api.createInvoice({jobId:jobId,amount:amount,note:note}).then(function(){
+    closeCreateModal();
+    return Promise.all([loadInvoices(),loadPendingJobs()]);
+  }).catch(function(e){alert('เกิดข้อผิดพลาด: '+e.message);
+  }).finally(function(){btn.disabled=false;btn.textContent='สร้างใบแจ้งหนี้';});
+}
+
+function markPaid(id){
+  if(!confirm('ยืนยันการชำระเงิน?'))return;
+  api.payInvoice(id).then(function(){
+    loadInvoices();
+  }).catch(function(e){alert('บันทึกไม่สำเร็จ: '+e.message);});
+}
+
+function printInvoice(id){
+  var inv=allInvoices.find(function(i){return i._id===id;});
+  if(!inv)return;
+  var no=inv.invoiceNo||('#INV-'+inv._id.slice(-6).toUpperCase());
+  var date=new Date(inv.createdAt).toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
+  var statusColor=inv.paid?'#16a34a':'#d97706';
+  var statusText=inv.paid?'ชำระแล้ว':'รอชำระ';
+  var custName=inv.customer?inv.customer.name:'-';
+  var plate=inv.job?inv.job.plate:'-';
+  var detail=inv.job?inv.job.detail:'-';
+  var noteHtml=inv.note?('<br><span style="color:#9ca3af;font-size:11px">'+inv.note+'</span>'):''
+  var amount=(inv.amount||0).toLocaleString('th-TH');
+  document.getElementById('printArea').innerHTML=
+    '<div style="max-width:600px;margin:0 auto;font-family:Prompt,sans-serif">'+
+    '<div style="text-align:center;margin-bottom:24px;border-bottom:2px solid #ea580c;padding-bottom:16px">'+
+    '<h2 style="font-size:22px;font-weight:700;color:#111827;margin-bottom:4px">Ao Nang Automotive</h2>'+
+    '<p style="font-size:13px;color:#6b7280">อ่าวนางยานยนต์ | 188 ม.2 ต.อ่าวนาง อ.เมือง จ.กระบี่ | โทร. 081-0827810</p>'+
+    '</div>'+
+    '<div style="display:flex;justify-content:space-between;margin-bottom:20px">'+
+    '<div><h3 style="font-size:20px;font-weight:700;color:#ea580c">ใบแจ้งหนี้</h3><p style="font-size:13px;color:#6b7280">'+no+'</p></div>'+
+    '<div style="text-align:right"><p style="font-size:13px;color:#6b7280">วันที่: '+date+'</p>'+
+    '<p style="font-size:13px;font-weight:600;color:'+statusColor+'">'+statusText+'</p></div>'+
+    '</div>'+
+    '<table style="width:100%;border-collapse:collapse;margin-bottom:20px;font-size:13px">'+
+    '<tr style="background:#f3f4f6"><th style="padding:8px 12px;text-align:left">ลูกค้า</th><th style="padding:8px 12px;text-align:left">ทะเบียน</th><th style="padding:8px 12px;text-align:left">รายการ</th><th style="padding:8px 12px;text-align:right">ยอดเงิน</th></tr>'+
+    '<tr><td style="padding:10px 12px">'+custName+'</td>'+
+    '<td style="padding:10px 12px;font-family:monospace">'+plate+'</td>'+
+    '<td style="padding:10px 12px">'+detail+noteHtml+'</td>'+
+    '<td style="padding:10px 12px;text-align:right;font-weight:600">฿'+amount+'</td></tr></table>'+
+    '<div style="display:flex;justify-content:flex-end">'+
+    '<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:14px 20px;min-width:200px">'+
+    '<div style="display:flex;justify-content:space-between;font-size:15px;font-weight:700">'+
+    '<span>ยอดชำระ</span><span>฿'+amount+'</span></div></div></div>'+
+    '<p style="text-align:center;margin-top:32px;font-size:12px;color:#9ca3af">ขอบคุณที่ใช้บริการ</p>'+
+    '</div>';
+  setTimeout(function(){window.print();},100);
+}
+
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closeCreateModal();});
 </script>
 </body>
 </html>
