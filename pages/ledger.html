@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>บัญชีรายวัน — Ao Nang Automotive</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+.ledger-toolbar { display:flex; align-items:center; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
+.date-nav { display:flex; align-items:center; gap:8px; background:var(--bg-white); border:1px solid var(--border); border-radius:var(--radius-sm); padding:6px 12px; }
+.date-nav button { background:none; border:none; cursor:pointer; color:var(--text-500); font-size:16px; padding:0 4px; line-height:1; }
+.date-nav button:hover { color:var(--primary); }
+.date-label { font-size:14px; font-weight:600; color:var(--text-900); min-width:160px; text-align:center; font-family:var(--font); }
+.export-btns { display:flex; gap:8px; margin-left:auto; }
+.btn-export { display:flex; align-items:center; gap:6px; padding:8px 14px; border-radius:var(--radius-sm); font-size:13px; font-weight:600; cursor:pointer; border:1px solid var(--border); background:var(--bg-white); color:var(--text-700); transition:all 0.15s; }
+.btn-export:hover { border-color:var(--primary); color:var(--primary); background:var(--primary-dim); }
+.btn-export.excel:hover { border-color:#16a34a; color:#16a34a; background:var(--green-dim); }
+.btn-export.pdf:hover { border-color:var(--red); color:var(--red); background:var(--red-dim); }
+.summary-bar { display:grid; grid-template-columns:repeat(5,1fr); gap:10px; margin-bottom:16px; }
+.sum-card { background:var(--bg-white); border:1px solid var(--border); border-radius:var(--radius); padding:12px 14px; }
+.sum-label { font-size:11px; font-weight:600; color:var(--text-500); margin-bottom:4px; text-transform:uppercase; letter-spacing:0.5px; }
+.sum-val { font-size:20px; font-weight:700; color:var(--text-900); font-family:var(--mono); }
+.sum-val.green { color:var(--green); }
+.sum-val.red { color:var(--red); }
+.sum-val.orange { color:var(--primary); }
+.add-row-form { background:var(--bg-white); border:1px solid var(--border); border-radius:var(--radius); padding:16px; margin-bottom:16px; }
+.add-row-title { font-size:14px; font-weight:700; color:var(--text-900); margin-bottom:12px; display:flex; align-items:center; gap:8px; }
+.add-row-fields { display:grid; grid-template-columns:2fr 1fr 1fr 1fr auto; gap:10px; align-items:end; }
+.ledger-table { width:100%; border-collapse:collapse; font-size:13px; }
+.ledger-table th { text-align:left; padding:9px 14px; font-size:10.5px; font-weight:700; color:var(--text-500); border-bottom:1px solid var(--border); text-transform:uppercase; letter-spacing:0.6px; background:var(--bg-surface); }
+.ledger-table td { padding:10px 14px; border-bottom:1px solid #f9fafb; vertical-align:middle; }
+.ledger-table tbody tr:hover { background:var(--bg-surface); }
+.ledger-table tbody tr:last-child td { border-bottom:none; }
+.del-btn { background:none; border:1px solid #fecaca; border-radius:5px; padding:3px 8px; font-size:11px; font-weight:600; color:var(--red); cursor:pointer; transition:all 0.15s; }
+.del-btn:hover { background:var(--red); color:#fff; }
+.deduct-row { background:#fffbeb !important; }
+.deduct-row td { color:#92400e !important; font-weight:500; }
+.empty-state { text-align:center; padding:40px; color:var(--text-400); font-size:14px; }
+.month-tab { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px; }
+.mtab { padding:5px 12px; border-radius:20px; font-size:12px; font-weight:600; cursor:pointer; border:1px solid var(--border); background:var(--bg-white); color:var(--text-500); transition:all 0.15s; }
+.mtab.active { background:var(--primary); color:#fff; border-color:var(--primary); }
+@media print {
+  .no-print { display:none !important; }
+  .main-content { margin-left:0 !important; }
+  .sidebar { display:none !important; }
+}
+</style>
+</head>
+<body>
+<div class="app-shell" id="appShell"></div>
+<script src="../js/api.js"></script>
+<script src="../js/shared.js"></script>
+<script>
+const DAILY_DEDUCT = 1500;
+const STORAGE_KEY = 'aonang_ledger';
+
+let ledgerData = [];
+let currentYear = new Date().getFullYear();
+let currentMonth = new Date().getMonth();
+
+function saveLedger() { localStorage.setItem(STORAGE_KEY, JSON.stringify(ledgerData)); }
+function loadLedgerStorage() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  ledgerData = raw ? JSON.parse(raw) : [];
+}
+
+function getMonthData(year, month) {
+  return ledgerData.filter(e => {
+    const d = new Date(e.date);
+    return d.getFullYear() === year && d.getMonth() === month;
+  });
+}
+
+function thaiMonths() {
+  return ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+}
+
+function buildPage() {
+  document.getElementById('appShell').innerHTML = `
+    ${getSidebar('ledger', '../')}
+    <main class="main-content">
+      ${getTopbar('บัญชีรายวัน', 'อ่าวนางยานยนต์', `
+        <div class="export-btns no-print">
+          <button class="btn-export excel" onclick="exportExcel()">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="12" height="12" rx="1.5"/><line x1="4" y1="5" x2="10" y2="5"/><line x1="4" y1="7.5" x2="10" y2="7.5"/><line x1="4" y1="10" x2="7" y2="10"/></svg>
+            Export Excel
+          </button>
+          <button class="btn-export pdf" onclick="exportPDF()">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 1h7l3 3v9H2V1z"/><polyline points="9,1 9,4 12,4"/></svg>
+            Export PDF
+          </button>
+        </div>
+      `)}
+      <div class="content-area">
+
+        <!-- เพิ่มรายการ -->
+        <div class="add-row-form no-print fade-in" style="--d:.05s">
+          <div class="add-row-title">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="var(--primary)" stroke-width="2"><circle cx="8" cy="8" r="7"/><line x1="8" y1="5" x2="8" y2="11"/><line x1="5" y1="8" x2="11" y2="8"/></svg>
+            เพิ่มรายการ
+          </div>
+          <div class="add-row-fields">
+            <div class="form-group">
+              <label>รายการ / สินค้า <span class="req">*</span></label>
+              <input type="text" id="f-item" placeholder="เช่น เปลี่ยนโซ่ Honda Wave">
+            </div>
+            <div class="form-group">
+              <label>จำนวนเงิน (บาท) <span class="req">*</span></label>
+              <input type="number" id="f-amount" placeholder="0" min="0">
+            </div>
+            <div class="form-group">
+              <label>ประเภทการชำระ</label>
+              <select id="f-paytype">
+                <option value="cash">เงินสด</option>
+                <option value="transfer">โอน</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>วันที่</label>
+              <input type="date" id="f-date">
+            </div>
+            <div class="form-group">
+              <label>&nbsp;</label>
+              <button class="btn-primary" onclick="addEntry()" style="height:42px">บันทึก</button>
+            </div>
+          </div>
+          <div style="margin-top:10px">
+            <div class="form-group" style="max-width:400px">
+              <label>หมายเหตุ / ชื่อลูกค้า</label>
+              <input type="text" id="f-note" placeholder="ชื่อลูกค้า หรือหมายเหตุเพิ่มเติม">
+            </div>
+          </div>
+        </div>
+
+        <!-- เลือกเดือน -->
+        <div class="month-tab no-print fade-in" style="--d:.08s" id="monthTabs"></div>
+
+        <!-- สรุปยอด -->
+        <div class="summary-bar fade-in" style="--d:.1s" id="summaryBar"></div>
+
+        <!-- ตาราง -->
+        <div class="panel fade-in" style="--d:.13s">
+          <div class="panel-header">
+            <div class="panel-title">
+              <span class="dot dot-orange"></span>
+              รายการ <span id="tableMonthLabel"></span>
+            </div>
+            <span id="tableCount" style="font-size:12px;color:var(--text-400)"></span>
+          </div>
+          <div class="table-wrap">
+            <table class="ledger-table" id="ledgerTable">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>วันที่</th>
+                  <th>รายการ</th>
+                  <th>หมายเหตุ</th>
+                  <th>ประเภท</th>
+                  <th style="text-align:right">จำนวนเงิน</th>
+                  <th class="no-print"></th>
+                </tr>
+              </thead>
+              <tbody id="ledgerTbody"></tbody>
+              <tfoot id="ledgerFoot"></tfoot>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </main>`;
+
+  // set today
+  document.getElementById('f-date').value = new Date().toISOString().slice(0,10);
+  renderMonthTabs();
+  renderLedger();
+}
+
+function renderMonthTabs() {
+  const months = thaiMonths();
+  const now = new Date();
+  const years = [...new Set(ledgerData.map(e => new Date(e.date).getFullYear()))];
+  if (!years.includes(currentYear)) years.push(currentYear);
+  years.sort((a,b)=>b-a);
+
+  let html = '';
+  years.forEach(y => {
+    months.forEach((m,i) => {
+      const count = ledgerData.filter(e => { const d=new Date(e.date); return d.getFullYear()===y&&d.getMonth()===i; }).length;
+      if (count > 0 || (y===now.getFullYear()&&i===now.getMonth())) {
+        const active = y===currentYear&&i===currentMonth ? 'active' : '';
+        html += `<button class="mtab ${active}" onclick="selectMonth(${y},${i})">${m} ${y+543}</button>`;
+      }
+    });
+  });
+  const el = document.getElementById('monthTabs');
+  if (el) el.innerHTML = html;
+}
+
+function selectMonth(y, m) {
+  currentYear = y; currentMonth = m;
+  renderMonthTabs();
+  renderLedger();
+}
+
+function renderLedger() {
+  const months = thaiMonths();
+  const data = getMonthData(currentYear, currentMonth).sort((a,b) => new Date(a.date)-new Date(b.date));
+
+  // label
+  const lbl = document.getElementById('tableMonthLabel');
+  if (lbl) lbl.textContent = `${months[currentMonth]} ${currentYear+543}`;
+  const cnt = document.getElementById('tableCount');
+  if (cnt) cnt.textContent = `${data.length} รายการ`;
+
+  // summary
+  const totalIncome = data.reduce((s,e)=>s+e.amount, 0);
+  const totalCash   = data.filter(e=>e.payType==='cash').reduce((s,e)=>s+e.amount, 0);
+  const totalTransfer = data.filter(e=>e.payType==='transfer').reduce((s,e)=>s+e.amount, 0);
+  const uniqueDays  = [...new Set(data.map(e=>e.date))].length;
+  const totalDeduct = uniqueDays * DAILY_DEDUCT;
+  const netProfit   = totalIncome - totalDeduct;
+
+  const sb = document.getElementById('summaryBar');
+  if (sb) sb.innerHTML = `
+    <div class="sum-card"><div class="sum-label">รายรับรวม</div><div class="sum-val green">฿${totalIncome.toLocaleString('th-TH')}</div></div>
+    <div class="sum-card"><div class="sum-label">เงินสด</div><div class="sum-val">฿${totalCash.toLocaleString('th-TH')}</div></div>
+    <div class="sum-card"><div class="sum-label">โอน</div><div class="sum-val">฿${totalTransfer.toLocaleString('th-TH')}</div></div>
+    <div class="sum-card"><div class="sum-label">หักถอนเงิน (${uniqueDays} วัน)</div><div class="sum-val red">-฿${totalDeduct.toLocaleString('th-TH')}</div></div>
+    <div class="sum-card"><div class="sum-label">กำไรสุทธิ</div><div class="sum-val ${netProfit>=0?'orange':'red'}">฿${netProfit.toLocaleString('th-TH')}</div></div>
+  `;
+
+  // group by date
+  const byDate = {};
+  data.forEach(e => {
+    if (!byDate[e.date]) byDate[e.date] = [];
+    byDate[e.date].push(e);
+  });
+
+  const tbody = document.getElementById('ledgerTbody');
+  if (!tbody) return;
+
+  if (!data.length) {
+    tbody.innerHTML = `<tr><td colspan="7" class="empty-state">ยังไม่มีรายการในเดือนนี้<br><span style="font-size:12px;margin-top:4px;display:block">เพิ่มรายการจากฟอร์มด้านบน</span></td></tr>`;
+    document.getElementById('ledgerFoot').innerHTML = '';
+    return;
+  }
+
+  let rows = '';
+  let no = 1;
+  Object.keys(byDate).sort().forEach(date => {
+    const d = new Date(date);
+    const dateStr = d.toLocaleDateString('th-TH', { weekday:'short', year:'numeric', month:'short', day:'numeric' });
+    const dayTotal = byDate[date].reduce((s,e)=>s+e.amount, 0);
+
+    // header row for each day
+    rows += `<tr style="background:#f8faff">
+      <td colspan="4" style="font-size:12px;font-weight:700;color:var(--blue);padding:8px 14px">${dateStr}</td>
+      <td colspan="2" style="text-align:right;font-size:12px;font-weight:700;color:var(--text-700);font-family:var(--mono)">รวมวันนี้: ฿${dayTotal.toLocaleString('th-TH')}</td>
+      <td class="no-print"></td>
+    </tr>`;
+
+    byDate[date].forEach(e => {
+      rows += `<tr>
+        <td style="color:var(--text-400);font-family:var(--mono);font-size:11px">${no++}</td>
+        <td style="font-size:11.5px;color:var(--text-400);font-family:var(--mono)">${date}</td>
+        <td style="font-size:13px;font-weight:600;color:var(--text-900)">${e.item}</td>
+        <td style="font-size:12px;color:var(--text-500)">${e.note||'-'}</td>
+        <td><span class="badge ${e.payType==='transfer'?'badge-transfer':'badge-done'}">${e.payType==='transfer'?'โอน':'เงินสด'}</span></td>
+        <td style="text-align:right;font-family:var(--mono);font-size:13px;font-weight:600;color:var(--green)">฿${e.amount.toLocaleString('th-TH')}</td>
+        <td class="no-print"><button class="del-btn" onclick="deleteEntry('${e.id}')">ลบ</button></td>
+      </tr>`;
+    });
+
+    // deduct row
+    rows += `<tr class="deduct-row">
+      <td></td>
+      <td style="font-family:var(--mono);font-size:11px">${date}</td>
+      <td style="font-size:12px;font-weight:600">หัก — ถอนเงินสดประจำวัน</td>
+      <td style="font-size:11px">ถอนเงิน 1,500 บาท/วัน</td>
+      <td><span class="badge" style="background:#fffbeb;color:#92400e">หักออก</span></td>
+      <td style="text-align:right;font-family:var(--mono);font-size:13px;font-weight:600;color:var(--red)">-฿1,500</td>
+      <td class="no-print"></td>
+    </tr>`;
+  });
+
+  tbody.innerHTML = rows;
+
+  // footer summary
+  document.getElementById('ledgerFoot').innerHTML = `
+    <tr style="background:var(--primary-dim);border-top:2px solid var(--primary-border)">
+      <td colspan="4" style="padding:12px 14px;font-size:13px;font-weight:700;color:var(--primary)">สรุปรวม ${months[currentMonth]} ${currentYear+543}</td>
+      <td style="font-size:12px;font-weight:600;color:var(--text-700)">
+        เงินสด: ฿${totalCash.toLocaleString('th-TH')}<br>
+        โอน: ฿${totalTransfer.toLocaleString('th-TH')}
+      </td>
+      <td style="text-align:right;padding:12px 14px">
+        <div style="font-family:var(--mono);font-size:11px;color:var(--text-500)">รายรับ: ฿${totalIncome.toLocaleString('th-TH')}</div>
+        <div style="font-family:var(--mono);font-size:11px;color:var(--red)">หัก: -฿${totalDeduct.toLocaleString('th-TH')}</div>
+        <div style="font-family:var(--mono);font-size:15px;font-weight:700;color:${netProfit>=0?'var(--green)':'var(--red)'}">กำไร: ฿${netProfit.toLocaleString('th-TH')}</div>
+      </td>
+      <td class="no-print"></td>
+    </tr>`;
+}
+
+function addEntry() {
+  const item   = document.getElementById('f-item').value.trim();
+  const amount = parseFloat(document.getElementById('f-amount').value);
+  const payType = document.getElementById('f-paytype').value;
+  const date   = document.getElementById('f-date').value;
+  const note   = document.getElementById('f-note').value.trim();
+
+  if (!item || !amount || !date) {
+    ['f-item','f-amount','f-date'].forEach(id => {
+      const el = document.getElementById(id);
+      if (!el.value) { el.style.borderColor='var(--red)'; setTimeout(()=>el.style.borderColor='',2000); }
+    });
+    return;
+  }
+
+  const entry = { id: Date.now().toString(), item, amount, payType, date, note };
+  ledgerData.push(entry);
+  saveLedger();
+
+  // switch to entered month
+  const d = new Date(date);
+  currentYear = d.getFullYear();
+  currentMonth = d.getMonth();
+
+  document.getElementById('f-item').value = '';
+  document.getElementById('f-amount').value = '';
+  document.getElementById('f-note').value = '';
+
+  renderMonthTabs();
+  renderLedger();
+}
+
+function deleteEntry(id) {
+  if (!confirm('ลบรายการนี้?')) return;
+  ledgerData = ledgerData.filter(e => e.id !== id);
+  saveLedger();
+  renderMonthTabs();
+  renderLedger();
+}
+
+// ── EXPORT EXCEL ──
+function exportExcel() {
+  const months = thaiMonths();
+  const data = getMonthData(currentYear, currentMonth).sort((a,b)=>new Date(a.date)-new Date(b.date));
+  const uniqueDays = [...new Set(data.map(e=>e.date))].length;
+  const totalDeduct = uniqueDays * DAILY_DEDUCT;
+  const totalIncome = data.reduce((s,e)=>s+e.amount,0);
+
+  const rows = [
+    ['Ao Nang Automotive — อ่าวนางยานยนต์'],
+    ['188 ม.2 ต.อ่าวนาง อ.เมือง จ.กระบี่ 81180 | โทร. 081-0827810'],
+    [`บัญชีรายวัน ${months[currentMonth]} ${currentYear+543}`],
+    [],
+    ['#','วันที่','รายการ','หมายเหตุ','ประเภทการชำระ','จำนวนเงิน (บาท)'],
+    ...data.map((e,i) => [i+1, e.date, e.item, e.note||'', e.payType==='transfer'?'โอน':'เงินสด', e.amount]),
+    [],
+    ['','','','','รายรับรวม', totalIncome],
+    ['','','','','หักถอนเงินสด (฿1,500/วัน)', -totalDeduct],
+    ['','','','','กำไรสุทธิ', totalIncome-totalDeduct],
+    [],
+    ['','','','','เงินสด', data.filter(e=>e.payType==='cash').reduce((s,e)=>s+e.amount,0)],
+    ['','','','','โอน', data.filter(e=>e.payType==='transfer').reduce((s,e)=>s+e.amount,0)],
+  ];
+
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols'] = [{wch:5},{wch:14},{wch:40},{wch:25},{wch:18},{wch:18}];
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, `${months[currentMonth]}${currentYear+543}`);
+
+  // All data sheet
+  const allRows = [
+    ['#','วันที่','รายการ','หมายเหตุ','ประเภทการชำระ','จำนวนเงิน'],
+    ...ledgerData.sort((a,b)=>new Date(a.date)-new Date(b.date)).map((e,i)=>[i+1,e.date,e.item,e.note||'',e.payType==='transfer'?'โอน':'เงินสด',e.amount])
+  ];
+  const wsAll = XLSX.utils.aoa_to_sheet(allRows);
+  wsAll['!cols'] = [{wch:5},{wch:14},{wch:40},{wch:25},{wch:18},{wch:18}];
+  XLSX.utils.book_append_sheet(wb, wsAll, 'ประวัติทั้งหมด');
+
+  XLSX.writeFile(wb, `AoNang_บัญชีรายวัน_${months[currentMonth]}${currentYear+543}.xlsx`);
+}
+
+// ── EXPORT PDF ──
+function exportPDF() {
+  window.print();
+}
+
+// ── INIT ──
+loadLedgerStorage();
+document.addEventListener('DOMContentLoaded', () => {
+  buildPage();
+});
+</script>
+</body>
+</html>

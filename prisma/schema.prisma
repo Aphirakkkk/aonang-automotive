@@ -1,0 +1,133 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      Role     @default(STAFF)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Job {
+  id             String    @id @default(cuid())
+  jobNumber      String    @unique
+  vehicleLabel   String
+  ownerName      String?
+  ownerPhone     String?
+  description    String
+  status         JobStatus @default(PENDING)
+  priority       Priority  @default(NORMAL)
+  estimatedCost  Float     @default(0)
+  actualCost     Float     @default(0)
+  technicianNote String?
+  startDate      DateTime?
+  completedAt    DateTime?
+  usedParts      JobPart[]
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+model Part {
+  id         String    @id @default(cuid())
+  code       String    @unique
+  name       String
+  category   String
+  brand      String?
+  unit       String    @default("ชิ้น")
+  costPrice  Float     @default(0)
+  sellPrice  Float     @default(0)
+  stock      Int       @default(0)
+  minStock   Int       @default(5)
+  imageUrl   String?
+  usedInJobs JobPart[]
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+}
+
+model JobPart {
+  id        String @id @default(cuid())
+  jobId     String
+  job       Job    @relation(fields: [jobId], references: [id])
+  partId    String
+  part      Part   @relation(fields: [partId], references: [id])
+  quantity  Int    @default(1)
+  unitPrice Float  @default(0)
+}
+
+model Invoice {
+  id            String        @id @default(cuid())
+  invoiceNumber String        @unique
+  customerName  String
+  customerPhone String?
+  jobId         String?
+  items         InvoiceItem[]
+  subtotal      Float         @default(0)
+  discount      Float         @default(0)
+  total         Float         @default(0)
+  status        InvoiceStatus @default(UNPAID)
+  paidAt        DateTime?
+  note          String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model InvoiceItem {
+  id          String  @id @default(cuid())
+  invoiceId   String
+  invoice     Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  description String
+  quantity    Int     @default(1)
+  unitPrice   Float   @default(0)
+  total       Float   @default(0)
+}
+
+model LedgerEntry {
+  id          String    @id @default(cuid())
+  date        DateTime
+  type        EntryType
+  category    String
+  description String
+  amount      Float
+  note        String?
+  createdAt   DateTime  @default(now())
+}
+
+enum Role {
+  OWNER
+  STAFF
+}
+
+enum JobStatus {
+  PENDING
+  IN_PROGRESS
+  WAITING_PARTS
+  COMPLETED
+  CANCELLED
+}
+
+enum Priority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum InvoiceStatus {
+  UNPAID
+  PAID
+  CANCELLED
+}
+
+enum EntryType {
+  INCOME
+  EXPENSE
+}

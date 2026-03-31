@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ลูกค้า — Ao Nang Automotive</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/style.css">
+<style>
+.customers-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.customer-card{background:var(--bg-white);border:1px solid var(--border);border-radius:var(--radius);padding:16px;transition:all 0.15s}
+.customer-card:hover{border-color:var(--primary);box-shadow:0 2px 8px rgba(0,0,0,0.06)}
+.cc-ava{width:44px;height:44px;border-radius:50%;background:var(--primary-dim);border:1px solid var(--primary-border);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:var(--primary);margin-bottom:12px}
+.cc-name{font-size:14px;font-weight:700;color:var(--text-900);margin-bottom:3px}
+.cc-phone{font-size:12px;color:var(--text-400);font-family:var(--mono);margin-bottom:12px}
+.cc-stats{display:flex;gap:12px;margin-bottom:10px}
+.cc-stat{text-align:center}
+.cc-stat-val{font-size:18px;font-weight:700;color:var(--text-900)}
+.cc-stat-label{font-size:10px;color:var(--text-400)}
+.cc-divider{width:1px;background:var(--border)}
+.cc-last{font-size:11px;color:var(--text-400);padding-top:10px;border-top:1px solid var(--border);margin-bottom:10px;line-height:1.5}
+.cc-actions{display:flex;gap:6px}
+.cc-btn{flex:1;padding:6px;font-size:11px;font-weight:600;border-radius:5px;cursor:pointer;border:1px solid;text-align:center;transition:all 0.15s;font-family:var(--font)}
+.cc-btn-edit{background:var(--primary-dim);color:var(--primary);border-color:var(--primary-border)}
+.cc-btn-edit:hover{background:var(--primary);color:#fff}
+.cc-btn-del{background:none;color:#dc2626;border-color:#fca5a5}
+.cc-btn-del:hover{background:#fee2e2}
+</style>
+</head>
+<body>
+<div class="app-shell" id="appShell"></div>
+
+<div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 class="modal-title" id="modalTitle">เพิ่มลูกค้าใหม่</h2>
+      <button class="modal-close" onclick="closeModal()">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group"><label>ชื่อ-นามสกุล <span class="req">*</span></label><input type="text" id="c-name" placeholder="สมชาย ใจดี"></div>
+        <div class="form-group"><label>เบอร์โทร</label><input type="text" id="c-phone" placeholder="081-234-5678"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>ทะเบียนรถ</label><input type="text" id="c-plate" placeholder="กทบ 1234"></div>
+        <div class="form-group"><label>ยี่ห้อ / รุ่นรถ</label><input type="text" id="c-bike" placeholder="Honda Wave 125i"></div>
+      </div>
+      <div class="form-group"><label>หมายเหตุ</label><textarea id="c-note" rows="2" placeholder="ข้อมูลเพิ่มเติม..."></textarea></div>
+      <input type="hidden" id="c-id">
+    </div>
+    <div class="modal-footer">
+      <button class="btn-ghost" onclick="closeModal()">ยกเลิก</button>
+      <button class="btn-primary" id="submitBtn" onclick="submitCustomer()">บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<script src="../js/api.js"></script>
+<script src="../js/shared.js"></script>
+<script>
+let customers=[];
+document.getElementById('appShell').innerHTML=`
+  ${getSidebar('customers','../')}
+  <main class="main-content">
+    ${getTopbar('ลูกค้า','',`
+      <div class="search-wrap" style="width:210px">
+        <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="6" r="4.5"/><line x1="9.7" y1="9.7" x2="13" y2="13"/></svg>
+        <input type="text" id="custSearch" placeholder="ค้นหาลูกค้า...">
+      </div>
+      <button class="btn-primary" onclick="openAddModal()">+ เพิ่มลูกค้า</button>
+    `)}
+    <div class="content-area">
+      <div class="customers-grid fade-in" id="custGrid"></div>
+    </div>
+  </main>`;
+document.addEventListener('DOMContentLoaded',async()=>{
+  checkAuth('../');
+  await loadCustomers();
+  document.getElementById('custSearch').addEventListener('input',e=>{
+    const q=e.target.value.toLowerCase();
+    renderCustomers(q?customers.filter(c=>c.name.toLowerCase().includes(q)||(c.phone||'').includes(q)):customers);
+  });
+});
+async function loadCustomers(){
+  try{
+    customers=await api.getCustomers();
+    renderCustomers(customers);
+  }catch(e){
+    console.error(e);
+    document.getElementById('custGrid').innerHTML='<div style="padding:20px;color:#dc2626">โหลดข้อมูลไม่สำเร็จ: '+e.message+'</div>';
+  }
+}
+function renderCustomers(data){
+  if(!data.length){
+    document.getElementById('custGrid').innerHTML='<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text-400)">ยังไม่มีลูกค้า กด "+ เพิ่มลูกค้า" เพื่อเริ่มต้น</div>';
+    return;
+  }
+  document.getElementById('custGrid').innerHTML=data.map(c=>`
+    <div class="customer-card fade-in">
+      <div class="cc-ava">${c.name.slice(0,1)}</div>
+      <div class="cc-name">${c.name}</div>
+      <div class="cc-phone">${c.phone||'-'}</div>
+      <div class="cc-stats">
+        <div class="cc-stat"><div class="cc-stat-val">${c.bikes?.length||0}</div><div class="cc-stat-label">คัน</div></div>
+        <div class="cc-divider"></div>
+        <div class="cc-stat"><div class="cc-stat-val" style="font-size:13px;padding-top:3px">${c.bikes?.[0]?.plate||'-'}</div><div class="cc-stat-label">ทะเบียน</div></div>
+      </div>
+      <div class="cc-last">รถ: ${c.bikes?.[0]?.model||'-'}${c.note?' · '+c.note:''}</div>
+      <div class="cc-actions">
+        <button class="cc-btn cc-btn-edit" onclick="openEditModal('${c._id}')">&#x270E; แก้ไข</button>
+        <button class="cc-btn cc-btn-del" onclick="deleteCustomer('${c._id}','${c.name}')">&#x2715; ลบ</button>
+      </div>
+    </div>`).join('');
+}
+function openAddModal(){
+  document.getElementById('modalTitle').textContent='เพิ่มลูกค้าใหม่';
+  document.getElementById('c-id').value='';
+  ['c-name','c-phone','c-plate','c-bike','c-note'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('modalOverlay').classList.add('active');
+}
+function openEditModal(id){
+  const c=customers.find(x=>x._id===id);
+  if(!c)return;
+  document.getElementById('modalTitle').textContent='แก้ไขข้อมูลลูกค้า';
+  document.getElementById('c-id').value=c._id;
+  document.getElementById('c-name').value=c.name;
+  document.getElementById('c-phone').value=c.phone||'';
+  document.getElementById('c-plate').value=c.bikes?.[0]?.plate||'';
+  document.getElementById('c-bike').value=c.bikes?.[0]?.model||'';
+  document.getElementById('c-note').value=c.note||'';
+  document.getElementById('modalOverlay').classList.add('active');
+}
+function closeModal(){document.getElementById('modalOverlay').classList.remove('active');}
+async function submitCustomer(){
+  const name=document.getElementById('c-name').value.trim();
+  if(!name){alert('กรุณากรอกชื่อลูกค้า');return;}
+  const id=document.getElementById('c-id').value;
+  const plate=document.getElementById('c-plate').value.trim().toUpperCase();
+  const bike=document.getElementById('c-bike').value.trim();
+  const data={
+    name,
+    phone:document.getElementById('c-phone').value.trim()||'-',
+    note:document.getElementById('c-note').value.trim(),
+    bikes:plate||bike?[{plate,model:bike}]:[],
+  };
+  const btn=document.getElementById('submitBtn');
+  btn.disabled=true;btn.textContent='กำลังบันทึก...';
+  try{
+    if(id){await api.updateCustomer(id,data);}
+    else{await api.createCustomer(data);}
+    closeModal();await loadCustomers();
+  }catch(e){alert('เกิดข้อผิดพลาด: '+e.message);}
+  finally{btn.disabled=false;btn.textContent='บันทึก';}
+}
+async function deleteCustomer(id,name){
+  if(!confirm('ต้องการลบลูกค้า "'+name+'" ใช่หรือไม่?'))return;
+  try{await api.deleteCustomer(id);await loadCustomers();}
+  catch(e){alert('ลบไม่สำเร็จ: '+e.message);}
+}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
+</script>
+</body>
+</html>

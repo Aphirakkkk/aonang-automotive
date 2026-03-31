@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>งานซ่อม — Ao Nang Automotive</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/style.css">
+<style>
+.kanban{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.kanban-col{background:var(--bg-white);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.kanban-header{padding:12px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.kanban-title{font-size:13px;font-weight:700;color:var(--text-900);display:flex;align-items:center;gap:7px}
+.kanban-count{font-family:var(--mono);font-size:11px;background:var(--bg-surface);border:1px solid var(--border);padding:2px 7px;border-radius:10px;color:var(--text-500)}
+.kanban-body{padding:10px;display:flex;flex-direction:column;gap:8px;min-height:280px}
+.job-card{background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;transition:all 0.15s}
+.job-card:hover{border-color:var(--primary);background:var(--bg-white)}
+.card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px}
+.card-id{font-family:var(--mono);font-size:11px;font-weight:500;color:var(--text-400)}
+.card-price{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--green)}
+.card-name{font-size:13px;font-weight:600;color:var(--text-900);margin-bottom:3px}
+.card-detail{font-size:12px;color:var(--text-500);margin-bottom:8px}
+.card-meta{display:flex;align-items:center;gap:8px}
+.card-plate{font-family:var(--mono);font-size:10.5px;background:#f3f4f6;border:1px solid var(--border);padding:2px 6px;border-radius:3px;color:var(--text-700)}
+.card-date{font-size:10.5px;color:var(--text-400);margin-left:auto}
+.card-actions{display:flex;gap:5px;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)}
+.card-btn{flex:1;padding:5px 8px;font-size:11px;font-weight:600;border-radius:4px;cursor:pointer;border:1px solid;text-align:center;transition:all 0.15s;font-family:var(--font)}
+.card-btn-edit{background:var(--primary-dim);color:var(--primary);border-color:var(--primary-border)}
+.card-btn-edit:hover{background:var(--primary);color:#fff}
+.card-btn-del{background:none;color:#dc2626;border-color:#fca5a5}
+.card-btn-del:hover{background:#fee2e2}
+.view-toggle{display:flex;gap:2px;background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:3px}
+.toggle-btn{background:none;border:none;cursor:pointer;color:var(--text-400);padding:5px 8px;border-radius:4px;display:flex;align-items:center;transition:all 0.15s}
+.toggle-btn.active{background:var(--bg-white);color:var(--primary);border:1px solid var(--primary-border)}
+.empty-col{padding:20px;text-align:center;font-size:12px;color:var(--text-400)}
+</style>
+</head>
+<body>
+<div class="app-shell" id="appShell"></div>
+<div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 class="modal-title" id="modalTitle">งานซ่อมใหม่</h2>
+      <button class="modal-close" onclick="closeModal()">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row" id="rowCustomer">
+        <div class="form-group"><label>ชื่อลูกค้า <span class="req">*</span></label><input type="text" id="f-customer" placeholder="ชื่อ-นามสกุล"></div>
+        <div class="form-group"><label>เบอร์โทร</label><input type="text" id="f-phone" placeholder="08x-xxx-xxxx"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>ทะเบียนรถ <span class="req">*</span></label><input type="text" id="f-plate" placeholder="กทบ 1234"></div>
+        <div class="form-group"><label>ยี่ห้อ / รุ่น</label><input type="text" id="f-model" placeholder="Honda Wave 125i"></div>
+      </div>
+      <div class="form-group"><label>รายละเอียด <span class="req">*</span></label><textarea id="f-detail" rows="3" placeholder="รายละเอียดงานซ่อม..."></textarea></div>
+      <div class="form-row">
+        <div class="form-group"><label>ค่าบริการ (บาท)</label><input type="number" id="f-price" placeholder="0"></div>
+        <div class="form-group"><label>สถานะ</label>
+          <select id="f-status">
+            <option value="waiting">รอดำเนินการ</option>
+            <option value="progress">กำลังซ่อม</option>
+            <option value="done">เสร็จแล้ว</option>
+          </select>
+        </div>
+      </div>
+      <input type="hidden" id="f-id">
+    </div>
+    <div class="modal-footer">
+      <button class="btn-ghost" onclick="closeModal()">ยกเลิก</button>
+      <button class="btn-primary" id="submitBtn" onclick="submitJob()">บันทึก</button>
+    </div>
+  </div>
+</div>
+<script src="../js/api.js"></script>
+<script src="../js/shared.js"></script>
+<script>
+const STATUS_LABEL={waiting:'รอดำเนินการ',progress:'กำลังซ่อม',done:'เสร็จแล้ว'};
+let allJobs=[];
+document.getElementById('appShell').innerHTML=`
+  ${getSidebar('jobs','../')}
+  <main class="main-content">
+    ${getTopbar('งานซ่อม','',`
+      <div class="view-toggle">
+        <button class="toggle-btn active" id="btnKanban" onclick="setView('kanban')" title="Kanban">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><rect x="1" y="1" width="3.5" height="12" rx="1"/><rect x="5.5" y="1" width="3" height="8" rx="1"/><rect x="9.5" y="1" width="3.5" height="10" rx="1"/></svg>
+        </button>
+        <button class="toggle-btn" id="btnTable" onclick="setView('table')" title="Table">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="1" y="1" width="12" height="12" rx="1"/><line x1="1" y1="5" x2="13" y2="5"/><line x1="1" y1="9" x2="13" y2="9"/><line x1="5" y1="1" x2="5" y2="13"/></svg>
+        </button>
+      </div>
+      <div class="search-wrap" style="width:210px">
+        <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="6" r="4.5"/><line x1="9.7" y1="9.7" x2="13" y2="13"/></svg>
+        <input type="text" id="jobSearch" placeholder="ค้นหางานซ่อม...">
+      </div>
+      <button class="btn-primary" onclick="openAddModal()">+ งานซ่อมใหม่</button>
+    `)}
+    <div class="content-area">
+      <div id="kanbanView" class="kanban fade-in">
+        <div class="kanban-col">
+          <div class="kanban-header"><div class="kanban-title"><span class="dot dot-orange"></span>รอดำเนินการ<span class="kanban-count" id="cnt-waiting">0</span></div></div>
+          <div class="kanban-body" id="col-waiting"></div>
+        </div>
+        <div class="kanban-col">
+          <div class="kanban-header"><div class="kanban-title"><span class="dot dot-blue"></span>กำลังซ่อม<span class="kanban-count" id="cnt-progress">0</span></div></div>
+          <div class="kanban-body" id="col-progress"></div>
+        </div>
+        <div class="kanban-col">
+          <div class="kanban-header"><div class="kanban-title"><span class="dot dot-green"></span>เสร็จแล้ว<span class="kanban-count" id="cnt-done">0</span></div></div>
+          <div class="kanban-body" id="col-done"></div>
+        </div>
+      </div>
+      <div id="tableView" class="panel fade-in" style="display:none">
+        <div class="panel-header"><div class="panel-title"><span class="dot dot-blue"></span>รายการงานซ่อมทั้งหมด</div></div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Job ID</th><th>ลูกค้า</th><th>ทะเบียน</th><th>งานซ่อม</th><th>วันที่</th><th>สถานะ</th><th>ค่าบริการ</th><th></th></tr></thead>
+            <tbody id="tableTbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>`;
+document.addEventListener('DOMContentLoaded',async()=>{
+  checkAuth('../');
+  await loadJobs();
+  document.getElementById('jobSearch').addEventListener('input',e=>{
+    const q=e.target.value.toLowerCase();
+    const f=q?allJobs.filter(j=>j.customer?.name?.toLowerCase().includes(q)||j.plate?.toLowerCase().includes(q)||j.jobId?.toLowerCase().includes(q)):allJobs;
+    renderKanban(f);renderTable(f);
+  });
+});
+async function loadJobs(){
+  try{allJobs=await api.getJobs();renderKanban(allJobs);renderTable(allJobs);}
+  catch(e){console.error(e);}
+}
+function renderKanban(jobs){
+  ['waiting','progress','done'].forEach(s=>{
+    const f=jobs.filter(j=>j.status===s);
+    document.getElementById('cnt-'+s).textContent=f.length;
+    document.getElementById('col-'+s).innerHTML=f.length?f.map(j=>`
+      <div class="job-card">
+        <div class="card-top"><span class="card-id">#${j.jobId}</span><span class="card-price">฿${(j.price||0).toLocaleString('th-TH')}</span></div>
+        <div class="card-name">${j.customer?.name||'-'}</div>
+        <div class="card-detail">${j.detail}</div>
+        <div class="card-meta"><span class="card-plate">${j.plate}</span><span class="card-date">${j.createdAt?.slice(0,10)||''}</span></div>
+        <div class="card-actions">
+          <button class="card-btn card-btn-edit" onclick="openEditModal('${j._id}')">&#x270E; แก้ไข</button>
+          <button class="card-btn card-btn-del" onclick="deleteJob('${j._id}','${j.jobId}')">ลบ</button>
+        </div>
+      </div>`).join(''):'<div class="empty-col">ไม่มีรายการ</div>';
+  });
+}
+function renderTable(jobs){
+  document.getElementById('tableTbody').innerHTML=jobs.map(j=>`
+    <tr>
+      <td class="job-id">#${j.jobId}</td>
+      <td><div class="cname">${j.customer?.name||'-'}</div><div class="cphone">${j.customer?.phone||'-'}</div></td>
+      <td><span class="plate-tag">${j.plate}</span></td>
+      <td style="font-size:12px;color:var(--text-500);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${j.detail}</td>
+      <td style="font-size:12px;color:var(--text-400);font-family:var(--mono)">${j.createdAt?.slice(0,10)||''}</td>
+      <td><span class="badge badge-${j.status}">${STATUS_LABEL[j.status]}</span></td>
+      <td class="price-val">฿${(j.price||0).toLocaleString('th-TH')}</td>
+      <td style="display:flex;gap:4px">
+        <button class="action-btn" onclick="openEditModal('${j._id}')">&#x270E; แก้ไข</button>
+        <button class="action-btn" style="color:#dc2626" onclick="deleteJob('${j._id}','${j.jobId}')">&#x2715; ลบ</button>
+      </td>
+    </tr>`).join('');
+}
+function setView(v){
+  document.getElementById('kanbanView').style.display=v==='kanban'?'grid':'none';
+  document.getElementById('tableView').style.display=v==='table'?'block':'none';
+  document.getElementById('btnKanban').classList.toggle('active',v==='kanban');
+  document.getElementById('btnTable').classList.toggle('active',v==='table');
+}
+function openAddModal(){
+  document.getElementById('modalTitle').textContent='งานซ่อมใหม่';
+  document.getElementById('f-id').value='';
+  ['f-customer','f-phone','f-plate','f-model','f-detail','f-price'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('f-status').value='waiting';
+  document.getElementById('rowCustomer').style.display='';
+  document.getElementById('modalOverlay').classList.add('active');
+}
+function openEditModal(id){
+  const j=allJobs.find(x=>x._id===id);
+  if(!j)return;
+  document.getElementById('modalTitle').textContent='แก้ไขงานซ่อม #'+j.jobId;
+  document.getElementById('f-id').value=j._id;
+  document.getElementById('f-customer').value=j.customer?.name||'';
+  document.getElementById('f-phone').value=j.customer?.phone||'';
+  document.getElementById('f-plate').value=j.plate||'';
+  document.getElementById('f-model').value=j.model||'';
+  document.getElementById('f-detail').value=j.detail||'';
+  document.getElementById('f-price').value=j.price||0;
+  document.getElementById('f-status').value=j.status||'waiting';
+  document.getElementById('rowCustomer').style.display='none';
+  document.getElementById('modalOverlay').classList.add('active');
+}
+function closeModal(){document.getElementById('modalOverlay').classList.remove('active');}
+async function submitJob(){
+  const id=document.getElementById('f-id').value;
+  const c=document.getElementById('f-customer').value.trim();
+  const p=document.getElementById('f-plate').value.trim();
+  const d=document.getElementById('f-detail').value.trim();
+  if(!p||!d||(!id&&!c)){alert('กรุณากรอกข้อมูลให้ครบ (ชื่อลูกค้า ทะเบียน รายละเอียด)');return;}
+  const btn=document.getElementById('submitBtn');
+  btn.disabled=true;btn.textContent='กำลังบันทึก...';
+  try{
+    if(id){
+      await api.updateJob(id,{
+        plate:p.toUpperCase(),
+        model:document.getElementById('f-model').value.trim(),
+        detail:d,
+        price:parseInt(document.getElementById('f-price').value)||0,
+        status:document.getElementById('f-status').value,
+      });
+    }else{
+      await api.createJob({
+        customerName:c,
+        phone:document.getElementById('f-phone').value.trim(),
+        plate:p.toUpperCase(),
+        model:document.getElementById('f-model').value.trim(),
+        detail:d,
+        price:parseInt(document.getElementById('f-price').value)||0,
+        status:document.getElementById('f-status').value,
+      });
+    }
+    closeModal();await loadJobs();
+  }catch(e){alert('เกิดข้อผิดพลาด: '+e.message);}
+  finally{btn.disabled=false;btn.textContent='บันทึก';}
+}
+async function deleteJob(id,jobId){
+  if(!confirm('ต้องการลบงานซ่อม #'+jobId+' ใช่หรือไม่?'))return;
+  try{await api.deleteJob(id);await loadJobs();}
+  catch(e){alert('ลบไม่สำเร็จ: '+e.message);}
+}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
+</script>
+</body>
+</html>
